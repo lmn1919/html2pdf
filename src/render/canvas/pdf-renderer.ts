@@ -80,12 +80,12 @@ export class CanvasRenderer extends Renderer {
         super(context, options);
         this.canvas = options.canvas ? options.canvas : document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
-        
+
         // 计算页面尺寸并转换为 pt 单位 (1pt = 1/72 inch, 1px = 1/96 inch)
         const pxToPt = (px: number) => px * (72 / 96);
         const pageWidth = pxToPt(options.width);
         const pageHeight = pxToPt(options.height);
-        
+
         // 初始化 jsPDF
         this.jspdfCtx = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
@@ -93,26 +93,26 @@ export class CanvasRenderer extends Renderer {
             format: [pageWidth, pageHeight],  // 使用转换后的尺寸
             hotfixes: ["px_scaling"]
         });
-        
+
         // 设置默认字体
-        this.jspdfCtx.setFont('Alibaba_PuHuiTi');
-        
+        // this.jspdfCtx.setFont('Alibaba_PuHuiTi');
+
         // 将 pxToPt 保存为实例属性，以便其他方法使用
         this.pxToPt = pxToPt;
-        
+
         if (!options.canvas) {
             this.canvas.width = Math.floor(options.width * options.scale);
             this.canvas.height = Math.floor(options.height * options.scale);
             this.canvas.style.width = `${options.width}px`;
             this.canvas.style.height = `${options.height}px`;
         }
-        
+
         this.fontMetrics = new FontMetrics(document);
         this.ctx.scale(this.options.scale, this.options.scale);
         this.ctx.translate(-options.x, -options.y);
         this.ctx.textBaseline = 'bottom';
         this._activeEffects = [];
-        
+
         this.context.logger.debug(
             `Canvas renderer initialized (${options.width}x${options.height}) with scale ${options.scale}`
         );
@@ -127,11 +127,11 @@ export class CanvasRenderer extends Renderer {
         effects.forEach((effect) => this.applyEffect(effect));
     }
 
-    pxToMm(px:number) {
+    pxToMm(px: number) {
         const mmPerInch = 25.4;
         const pxPerInch = 96;
         return (px * mmPerInch) / pxPerInch;
-      }
+    }
 
     // 应用单个效果
     applyEffect(effect: IElementEffect): void {
@@ -190,25 +190,30 @@ export class CanvasRenderer extends Renderer {
     // 渲染带有字母间距的文本
     renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, baseline: number): void {
         if (letterSpacing === 0) {
-            const extraPadding = text.text.startsWith('•') ? -8 : 0;
+            const extraPadding = text.text.startsWith('•') ? -10 : 0;
+            const extraPaddingPt = text.text.startsWith('•') ? (text.bounds.height+2)/2 : 0;
             this.ctx.fillText(text.text, text.bounds.left + extraPadding, text.bounds.top + baseline);
-            
+
             // 转换坐标为 pt 单位
             const leftPt = this.pxToPt(text.bounds.left + extraPadding);
-            const topPt = this.pxToPt(text.bounds.top);
+            const topPt = this.pxToPt(text.bounds.top + baseline + extraPaddingPt);
+            // console.log('leftPt',leftPt,text.text)
             
+            // 设置PDF文字颜色
+         
             this.jspdfCtx.text(text.text, leftPt, topPt);
         } else {
             const letters = segmentGraphemes(text.text);
             let startX = text.bounds.left;
-            
+
             if (letters[0] === '•') {
                 startX -= 8;
             }
-            
+
             letters.reduce((left, letter) => {
-                this.ctx.fillText(letter,this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
-                this.jspdfCtx.text(letter,this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
+                this.ctx.fillText(letter, this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
+              
+                this.jspdfCtx.text(letter, this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
                 return this.pxToPt(left + this.ctx.measureText(letter).width);
             }, startX);
         }
@@ -252,12 +257,12 @@ export class CanvasRenderer extends Renderer {
         console.log(text.textBounds)
         let newTextBounds: any = []
         text.textBounds.forEach((text) => {
-         
+
             let hasText = newTextBounds.filter((el: any) => el.bounds.top == text.bounds.top)
             if (hasText.length > 0) {
                 hasText[0].text += text.text
             } else {
-                newTextBounds=[...newTextBounds,text]
+                newTextBounds = [...newTextBounds, text]
             }
         })
         text.textBounds = newTextBounds
@@ -270,7 +275,9 @@ export class CanvasRenderer extends Renderer {
 
                     case PAINT_ORDER_LAYER.FILL:
                         // console.log('PAINT_ORDER_LAYER.FILL',paintOrderLayer,PAINT_ORDER_LAYER.FILL)
+                        console.log('text.text颜色',styles.color,asString(styles.color))
                         this.ctx.fillStyle = asString(styles.color);
+                        this.jspdfCtx.setTextColor(asString(styles.color)); // 设置为黑色
                         this.renderTextWithLetterSpacing(text, styles.letterSpacing, baseline);
                         const textShadows: TextShadow = styles.textShadow;
 
@@ -788,12 +795,15 @@ export class CanvasRenderer extends Renderer {
         this.ctx.fill();
     }
 
+    // 渲染节点的背景和边框
     async renderNodeBackgroundAndBorders(paint: ElementPaint): Promise<void> {
+        // 应用背景和边框的效果
         this.applyEffects(paint.getEffects(EffectTarget.BACKGROUND_BORDERS));
         const styles = paint.container.styles;
+        // 检查是否有背景色或背景图片
         const hasBackground = !isTransparent(styles.backgroundColor) || styles.backgroundImage.length;
 
-        // 添加 borders 定义
+        // 定义四个边框的样式、颜色和宽度
         const borders = [
             { style: styles.borderTopStyle, color: styles.borderTopColor, width: styles.borderTopWidth },
             { style: styles.borderRightStyle, color: styles.borderRightColor, width: styles.borderRightWidth },
@@ -801,31 +811,34 @@ export class CanvasRenderer extends Renderer {
             { style: styles.borderLeftStyle, color: styles.borderLeftColor, width: styles.borderLeftWidth }
         ];
 
+        // 计算背景的绘制区域
         const backgroundPaintingArea = calculateBackgroundCurvedPaintingArea(
             getBackgroundValueForIndex(styles.backgroundClip, 0),
             paint.curves
         );
 
+        // 如果有背景或阴影,进行绘制
         if (hasBackground || styles.boxShadow.length) {
             this.ctx.save();
             this.path(backgroundPaintingArea);
             this.ctx.clip();
 
+            // 绘制背景色
             if (!isTransparent(styles.backgroundColor)) {
                 this.ctx.fillStyle = asString(styles.backgroundColor);
                 this.ctx.fill();
-                
+
                 // 获取背景区域的坐标和尺寸
                 const startPoint = backgroundPaintingArea[0] as Vector;
                 const endPoint = backgroundPaintingArea[2] as Vector;
-                
+                console.log('backgroundPaintingArea', backgroundPaintingArea)
                 // 转换坐标为 pt 单位
                 const x = this.pxToPt(startPoint.x);
                 const y = this.pxToPt(startPoint.y);
                 const width = this.pxToPt(endPoint.x - startPoint.x);
                 const height = this.pxToPt(endPoint.y - startPoint.y);
-                
-                // 渲染PDF背景色
+
+                // 在PDF中渲染背景色
                 this.jspdfCtx.setFillColor('#efefef');
                 this.jspdfCtx.rect(
                     x,           // x 坐标
@@ -836,21 +849,23 @@ export class CanvasRenderer extends Renderer {
                 );
             }
 
+            // 渲染背景图片
             await this.renderBackgroundImage(paint.container);
             this.ctx.restore();
 
-            // 处理阴影效果...
+            // 处理阴影效果
             styles.boxShadow.forEach(shadow => {
                 const borderBoxArea = calculateBorderBoxPath(paint.curves);
                 const startPoint = borderBoxArea[0] as Vector;
                 const endPoint = borderBoxArea[2] as Vector;
-                
+
                 // 转换阴影坐标和尺寸为 pt 单位
                 const x = this.pxToPt(startPoint.x + shadow.offsetX.number);
                 const y = this.pxToPt(startPoint.y + shadow.offsetY.number);
                 const width = this.pxToPt(endPoint.x - startPoint.x);
                 const height = this.pxToPt(endPoint.y - startPoint.y);
-                
+
+                // 在PDF中渲染阴影
                 this.jspdfCtx.setFillColor(shadow.color);
                 this.jspdfCtx.rect(
                     x,
@@ -862,11 +877,14 @@ export class CanvasRenderer extends Renderer {
             });
         }
 
-        // 处理边框
+        // 处理四个边框
         let side = 0;
+        console.log('borders',borders)
         for (const border of borders) {
+        
+            // 只处理有效的边框(有样式、颜色且宽度大于0)
             if (border.style !== BORDER_STYLE.NONE && !isTransparent(border.color) && border.width > 0) {
-                // Canvas 渲染
+                // 根据不同的边框样式进行Canvas渲染
                 if (border.style === BORDER_STYLE.DASHED) {
                     await this.renderDashedDottedBorder(
                         border.color,
@@ -889,7 +907,7 @@ export class CanvasRenderer extends Renderer {
                     await this.renderSolidBorder(border.color, side, paint.curves);
                 }
 
-                // PDF 边框渲染
+                // PDF边框渲染设置
                 const color = border.color;
                 this.jspdfCtx.setDrawColor(color);
                 this.jspdfCtx.setLineWidth(this.pxToPt(border.width));
@@ -899,9 +917,9 @@ export class CanvasRenderer extends Renderer {
                 const startPoint = borderBoxArea[0] as Vector;
                 const endPoint = borderBoxArea[2] as Vector;
 
-                // 根据边的位置绘制不同的边框
-                switch(side) {
-                    case 0: // top
+                // 根据边的位置(上右下左)绘制不同的边框线
+                switch (side) {
+                    case 0: // 上边框
                         this.jspdfCtx.line(
                             this.pxToPt(startPoint.x),
                             this.pxToPt(startPoint.y),
@@ -909,7 +927,7 @@ export class CanvasRenderer extends Renderer {
                             this.pxToPt(startPoint.y)
                         );
                         break;
-                    case 1: // right
+                    case 1: // 右边框
                         this.jspdfCtx.line(
                             this.pxToPt(endPoint.x),
                             this.pxToPt(startPoint.y),
@@ -917,7 +935,7 @@ export class CanvasRenderer extends Renderer {
                             this.pxToPt(endPoint.y)
                         );
                         break;
-                    case 2: // bottom
+                    case 2: // 下边框
                         this.jspdfCtx.line(
                             this.pxToPt(startPoint.x),
                             this.pxToPt(endPoint.y),
@@ -925,7 +943,7 @@ export class CanvasRenderer extends Renderer {
                             this.pxToPt(endPoint.y)
                         );
                         break;
-                    case 3: // left
+                    case 3: // 左边框
                         this.jspdfCtx.line(
                             this.pxToPt(startPoint.x),
                             this.pxToPt(startPoint.y),

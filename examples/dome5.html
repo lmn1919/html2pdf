@@ -13,6 +13,7 @@
       h1{
         /* border-bottom:2px solid white; */
         font-size: 24px;
+        background: #efefef;
       }
 
       h2{
@@ -21,8 +22,9 @@
       }
       .text-center{
         border: 1px solid red;
+        /* box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5); */
         /* text-align: center; */
-        background: #efefef;
+     
       }
       .red-text{
         color: red;
@@ -44,12 +46,20 @@
         <!-- <p>这类的开源工具绝大多数情况下，只需要按照说明文档使用，基本可以做到开箱即用，极大的简化了相关工作的复杂性。</p>
         <p>但这样的便捷也很容易导致大家忽视其背后的原理及实现，只是知其然而不知其所以然。</p> -->
         <p class="text-center">不过，通常情况下这样做也没有什么大问题，只要能够满足需求就可以了，毕竟现在的开源工具如此之多，如果每个开源工具都去深入了解，那么对时间和精力也是一个巨大的消耗。</p>
+
     <script type="text/javascript" src="../dist/html2canvas.js"></script>
     <script type="text/javascript">
-        html2canvas(document.body).then(function(canvas) {
-          
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          html2canvas(document.body).then(function(canvas) {
             document.body.appendChild(canvas);
-        });
+          });
+        }
+      });
+        // html2canvas(document.body).then(function(canvas) {
+          
+        //     document.body.appendChild(canvas);
+        // });
       
     </script>
    
