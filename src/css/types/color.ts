@@ -1,14 +1,19 @@
-import {CSSValue, nonFunctionArgSeparator, Parser} from '../syntax/parser';
-import {TokenType} from '../syntax/tokenizer';
-import {ITypeDescriptor} from '../ITypeDescriptor';
-import {angle, deg} from './angle';
-import {getAbsoluteValue, isLengthPercentage} from './length-percentage';
-import {Context} from '../../core/context';
+// 导入必要的依赖
+import { Context } from '../../core/context';
+import { ITypeDescriptor } from '../ITypeDescriptor';
+import { CSSValue, nonFunctionArgSeparator, Parser } from '../syntax/parser';
+import { TokenType } from '../syntax/tokenizer';
+import { angle, deg } from './angle';
+import { getAbsoluteValue, isLengthPercentage } from './length-percentage';
+
+// 定义颜色类型为数字
 export type Color = number;
 
+// 颜色类型描述器
 export const color: ITypeDescriptor<Color> = {
     name: 'color',
     parse: (context: Context, value: CSSValue): Color => {
+        // 处理颜色函数
         if (value.type === TokenType.FUNCTION) {
             const colorFunction = SUPPORTED_COLOR_FUNCTIONS[value.name];
             if (typeof colorFunction === 'undefined') {
@@ -17,7 +22,9 @@ export const color: ITypeDescriptor<Color> = {
             return colorFunction(context, value.values);
         }
 
+        // 处理十六进制颜色值
         if (value.type === TokenType.HASH_TOKEN) {
+            // 处理3位十六进制颜色值 (#RGB)
             if (value.value.length === 3) {
                 const r = value.value.substring(0, 1);
                 const g = value.value.substring(1, 2);
@@ -25,6 +32,7 @@ export const color: ITypeDescriptor<Color> = {
                 return pack(parseInt(r + r, 16), parseInt(g + g, 16), parseInt(b + b, 16), 1);
             }
 
+            // 处理4位十六进制颜色值 (#RGBA)
             if (value.value.length === 4) {
                 const r = value.value.substring(0, 1);
                 const g = value.value.substring(1, 2);
@@ -33,6 +41,7 @@ export const color: ITypeDescriptor<Color> = {
                 return pack(parseInt(r + r, 16), parseInt(g + g, 16), parseInt(b + b, 16), parseInt(a + a, 16) / 255);
             }
 
+            // 处理6位十六进制颜色值 (#RRGGBB)
             if (value.value.length === 6) {
                 const r = value.value.substring(0, 2);
                 const g = value.value.substring(2, 4);
@@ -40,6 +49,7 @@ export const color: ITypeDescriptor<Color> = {
                 return pack(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16), 1);
             }
 
+            // 处理8位十六进制颜色值 (#RRGGBBAA)
             if (value.value.length === 8) {
                 const r = value.value.substring(0, 2);
                 const g = value.value.substring(2, 4);
@@ -49,6 +59,7 @@ export const color: ITypeDescriptor<Color> = {
             }
         }
 
+        // 处理命名颜色
         if (value.type === TokenType.IDENT_TOKEN) {
             const namedColor = COLORS[value.value.toUpperCase()];
             if (typeof namedColor !== 'undefined') {
@@ -56,12 +67,15 @@ export const color: ITypeDescriptor<Color> = {
             }
         }
 
+        // 默认返回透明色
         return COLORS.TRANSPARENT;
     }
 };
 
+// 判断颜色是否透明
 export const isTransparent = (color: Color): boolean => (0xff & color) === 0;
 
+// 将颜色转换为字符串表示
 export const asString = (color: Color): string => {
     const alpha = 0xff & color;
     const blue = 0xff & (color >> 8);
@@ -70,9 +84,11 @@ export const asString = (color: Color): string => {
     return alpha < 255 ? `rgba(${red},${green},${blue},${alpha / 255})` : `rgb(${red},${green},${blue})`;
 };
 
+// 将RGBA分量打包为一个32位整数
 export const pack = (r: number, g: number, b: number, a: number): Color =>
     ((r << 24) | (g << 16) | (b << 8) | (Math.round(a * 255) << 0)) >>> 0;
 
+// 获取颜色值的数值
 const getTokenColorValue = (token: CSSValue, i: number): number => {
     if (token.type === TokenType.NUMBER_TOKEN) {
         return token.number;
@@ -86,14 +102,17 @@ const getTokenColorValue = (token: CSSValue, i: number): number => {
     return 0;
 };
 
+// RGB颜色函数处理
 const rgb = (_context: Context, args: CSSValue[]): number => {
     const tokens = args.filter(nonFunctionArgSeparator);
 
+    // RGB三分量
     if (tokens.length === 3) {
         const [r, g, b] = tokens.map(getTokenColorValue);
         return pack(r, g, b, 1);
     }
 
+    // RGBA四分量
     if (tokens.length === 4) {
         const [r, g, b, a] = tokens.map(getTokenColorValue);
         return pack(r, g, b, a);
@@ -102,6 +121,7 @@ const rgb = (_context: Context, args: CSSValue[]): number => {
     return 0;
 };
 
+// HSL颜色空间中的色相转RGB辅助函数
 function hue2rgb(t1: number, t2: number, hue: number): number {
     if (hue < 0) {
         hue += 1;
@@ -121,15 +141,18 @@ function hue2rgb(t1: number, t2: number, hue: number): number {
     }
 }
 
+// HSL颜色函数处理
 const hsl = (context: Context, args: CSSValue[]): number => {
     const tokens = args.filter(nonFunctionArgSeparator);
     const [hue, saturation, lightness, alpha] = tokens;
 
+    // 转换HSL参数
     const h = (hue.type === TokenType.NUMBER_TOKEN ? deg(hue.number) : angle.parse(context, hue)) / (Math.PI * 2);
     const s = isLengthPercentage(saturation) ? saturation.number / 100 : 0;
     const l = isLengthPercentage(lightness) ? lightness.number / 100 : 0;
     const a = typeof alpha !== 'undefined' && isLengthPercentage(alpha) ? getAbsoluteValue(alpha, 1) : 1;
 
+    // 处理无饱和度的情况
     if (s === 0) {
         return pack(l * 255, l * 255, l * 255, 1);
     }
@@ -143,6 +166,7 @@ const hsl = (context: Context, args: CSSValue[]): number => {
     return pack(r * 255, g * 255, b * 255, a);
 };
 
+// 支持的颜色函数映射
 const SUPPORTED_COLOR_FUNCTIONS: {
     [key: string]: (context: Context, args: CSSValue[]) => number;
 } = {
@@ -152,9 +176,11 @@ const SUPPORTED_COLOR_FUNCTIONS: {
     rgba: rgb
 };
 
+// 解析颜色字符串
 export const parseColor = (context: Context, value: string): Color =>
     color.parse(context, Parser.create(value).parseComponentValue());
 
+// 预定义的命名颜色映射表
 export const COLORS: {[key: string]: Color} = {
     ALICEBLUE: 0xf0f8ffff,
     ANTIQUEWHITE: 0xfaebd7ff,

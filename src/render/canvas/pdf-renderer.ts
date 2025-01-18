@@ -17,7 +17,7 @@ import { TEXT_ALIGN } from '../../css/property-descriptors/text-align'; // 文�
 import { TEXT_DECORATION_LINE } from '../../css/property-descriptors/text-decoration-line'; // 文本装饰线
 import { TextShadow } from '../../css/property-descriptors/text-shadow'; // 文本阴影
 import { isDimensionToken } from '../../css/syntax/parser'; // 维度标记判断
-import { asString, Color, isTransparent } from '../../css/types/color'; // 颜色相关工具
+import { asString, Color, isTransparent, } from '../../css/types/color'; // 颜色相关工具
 import { calculateGradientDirection, calculateRadius, processColorStops } from '../../css/types/functions/gradient'; // 渐变计算
 import { CSSImageType, CSSURLImage, isLinearGradient, isRadialGradient } from '../../css/types/image'; // 图片类型
 import { FIFTY_PERCENT, getAbsoluteValue } from '../../css/types/length-percentage'; // 长度百分比
@@ -191,16 +191,16 @@ export class CanvasRenderer extends Renderer {
     renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, baseline: number): void {
         if (letterSpacing === 0) {
             const extraPadding = text.text.startsWith('•') ? -10 : 0;
-            const extraPaddingPt = text.text.startsWith('•') ? (text.bounds.height+2)/2 : 0;
+            const extraPaddingPt = text.text.startsWith('•') ? (text.bounds.height + 2) / 2 : 0;
             this.ctx.fillText(text.text, text.bounds.left + extraPadding, text.bounds.top + baseline);
 
             // 转换坐标为 pt 单位
             const leftPt = this.pxToPt(text.bounds.left + extraPadding);
             const topPt = this.pxToPt(text.bounds.top + baseline + extraPaddingPt);
             // console.log('leftPt',leftPt,text.text)
-            
+
             // 设置PDF文字颜色
-         
+
             this.jspdfCtx.text(text.text, leftPt, topPt);
         } else {
             const letters = segmentGraphemes(text.text);
@@ -212,7 +212,7 @@ export class CanvasRenderer extends Renderer {
 
             letters.reduce((left, letter) => {
                 this.ctx.fillText(letter, this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
-              
+
                 this.jspdfCtx.text(letter, this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
                 return this.pxToPt(left + this.ctx.measureText(letter).width);
             }, startX);
@@ -254,7 +254,7 @@ export class CanvasRenderer extends Renderer {
         this.ctx.textBaseline = 'alphabetic';
         const { baseline, middle } = this.fontMetrics.getMetrics(fontFamily, fontSize);
         const paintOrder = styles.paintOrder;
-        console.log(text.textBounds)
+        // console.log(text.textBounds)
         let newTextBounds: any = []
         text.textBounds.forEach((text) => {
 
@@ -266,7 +266,7 @@ export class CanvasRenderer extends Renderer {
             }
         })
         text.textBounds = newTextBounds
-        console.log(newTextBounds)
+        // console.log(newTextBounds)
         text.textBounds.forEach((text) => {
 
             paintOrder.forEach((paintOrderLayer) => {
@@ -275,7 +275,7 @@ export class CanvasRenderer extends Renderer {
 
                     case PAINT_ORDER_LAYER.FILL:
                         // console.log('PAINT_ORDER_LAYER.FILL',paintOrderLayer,PAINT_ORDER_LAYER.FILL)
-                        console.log('text.text颜色',styles.color,asString(styles.color))
+                        // console.log('text.text颜色',styles.color,asString(styles.color))
                         this.ctx.fillStyle = asString(styles.color);
                         this.jspdfCtx.setTextColor(asString(styles.color)); // 设置为黑色
                         this.renderTextWithLetterSpacing(text, styles.letterSpacing, baseline);
@@ -358,42 +358,91 @@ export class CanvasRenderer extends Renderer {
     }
 
     // 渲染替换元素(如图片、canvas等)
+    // 渲染替换元素(如图片、canvas等)的方法
     renderReplacedElement(
-        container: ReplacedElementContainer,
-        curves: BoundCurves,
-        image: HTMLImageElement | HTMLCanvasElement
+        container: ReplacedElementContainer, // 替换元素容器
+        curves: BoundCurves, // 边界曲线
+        image: HTMLImageElement | HTMLCanvasElement // 图片或Canvas元素
     ): void {
+        // 检查图片是否存在且有有效的宽高
         if (image && container.intrinsicWidth > 0 && container.intrinsicHeight > 0) {
+            // 获取内容盒子尺寸
             const box = contentBox(container);
+            // 计算内边距盒子路径
             const path = calculatePaddingBoxPath(curves);
+            // 设置路径
             this.path(path);
+            // 保存当前绘图状态
             this.ctx.save();
+            // 设置裁剪区域
             this.ctx.clip();
+            // 在裁剪区域内绘制图片
             this.ctx.drawImage(
-                image,
-                0,
-                0,
-                container.intrinsicWidth,
-                container.intrinsicHeight,
-                box.left,
-                box.top,
-                box.width,
-                box.height
+                image, // 源图片
+                0, // 源图片的x坐标
+                0, // 源图片的y坐标
+                container.intrinsicWidth, // 源图片的宽度
+                container.intrinsicHeight, // 源图片的高度
+                box.left, // 目标位置的x坐标
+                box.top, // 目标位置的y坐标
+                box.width, // 目标位置的宽度
+                box.height // 目标位置的高度
             );
+            // 恢复之前保存的绘图状态
             this.ctx.restore();
+            // 将图片绘制到PDF中
+            // 计算图片在PDF中的位置和尺寸(转换为pt单位)
+            const pdfBox = {
+                left: this.pxToPt(box.left),
+                top: this.pxToPt(box.top), 
+                width: this.pxToPt(box.width),
+                height: this.pxToPt(box.height)
+            };
+
+
+            console.log('绘制图片',image)
+
+            // 如果是HTMLImageElement,则直接添加图片
+            if(image instanceof HTMLImageElement) {
+                this.jspdfCtx.addImage(
+                    image,
+                    'PNG',
+                    pdfBox.left,
+                    pdfBox.top,
+                    pdfBox.width, 
+                    pdfBox.height
+                );
+            }
+            // 如果是Canvas元素,则先转换为base64再添加
+            else if(image instanceof HTMLCanvasElement) {
+                const imgData = image.toDataURL('image/png');
+                this.jspdfCtx.addImage(
+                    imgData,
+                    'PNG',
+                    pdfBox.left,
+                    pdfBox.top,
+                    pdfBox.width,
+                    pdfBox.height
+                );
+            }
         }
     }
 
     // 渲染节点内容
+    // 渲染节点内容的异步方法
     async renderNodeContent(paint: ElementPaint): Promise<void> {
+        // 应用内容效果
         this.applyEffects(paint.getEffects(EffectTarget.CONTENT));
         const container = paint.container;
         const curves = paint.curves;
         const styles = container.styles;
+
+        // 渲染所有文本节点
         for (const child of container.textNodes) {
             await this.renderTextNode(child, styles);
         }
 
+        // 处理图片元素
         if (container instanceof ImageElementContainer) {
             try {
                 const image = await this.context.cache.match(container.src);
@@ -403,10 +452,12 @@ export class CanvasRenderer extends Renderer {
             }
         }
 
+        // 处理Canvas元素
         if (container instanceof CanvasElementContainer) {
             this.renderReplacedElement(container, curves, container.canvas);
         }
 
+        // 处理SVG元素
         if (container instanceof SVGElementContainer) {
             try {
                 const image = await this.context.cache.match(container.svg);
@@ -416,6 +467,7 @@ export class CanvasRenderer extends Renderer {
             }
         }
 
+        // 处理IFrame元素
         if (container instanceof IFrameElementContainer && container.tree) {
             const iframeRenderer = new CanvasRenderer(this.context, {
                 scale: this.options.scale,
@@ -442,9 +494,11 @@ export class CanvasRenderer extends Renderer {
             }
         }
 
+        // 处理Input元素
         if (container instanceof InputElementContainer) {
             const size = Math.min(container.bounds.width, container.bounds.height);
 
+            // 渲染复选框
             if (container.type === CHECKBOX) {
                 if (container.checked) {
                     this.ctx.save();
@@ -462,7 +516,9 @@ export class CanvasRenderer extends Renderer {
                     this.ctx.fill();
                     this.ctx.restore();
                 }
-            } else if (container.type === RADIO) {
+            }
+            // 渲染单选框
+            else if (container.type === RADIO) {
                 if (container.checked) {
                     this.ctx.save();
                     this.ctx.beginPath();
@@ -481,6 +537,7 @@ export class CanvasRenderer extends Renderer {
             }
         }
 
+        // 处理文本输入元素
         if (isTextInputElement(container) && container.value.length) {
             const [fontFamily, fontSize] = this.createFontStyle(styles);
             const { baseline } = this.fontMetrics.getMetrics(fontFamily, fontSize);
@@ -495,6 +552,7 @@ export class CanvasRenderer extends Renderer {
 
             let x = 0;
 
+            // 根据文本对齐方式调整x坐标
             switch (container.styles.textAlign) {
                 case TEXT_ALIGN.CENTER:
                     x += bounds.width / 2;
@@ -525,7 +583,9 @@ export class CanvasRenderer extends Renderer {
             this.ctx.textAlign = 'left';
         }
 
+        // 处理列表项
         if (contains(container.styles.display, DISPLAY.LIST_ITEM)) {
+            // 渲染列表项图标
             if (container.styles.listStyleImage !== null) {
                 const img = container.styles.listStyleImage;
                 if (img.type === CSSImageType.URL) {
@@ -538,7 +598,9 @@ export class CanvasRenderer extends Renderer {
                         this.context.logger.error(`Error loading list-style-image ${url}`);
                     }
                 }
-            } else if (paint.listValue && container.styles.listStyleType !== LIST_STYLE_TYPE.NONE) {
+            }
+            // 渲染列表项标记
+            else if (paint.listValue && container.styles.listStyleType !== LIST_STYLE_TYPE.NONE) {
                 const [fontFamily] = this.createFontStyle(styles);
 
                 this.ctx.font = fontFamily;
@@ -562,9 +624,11 @@ export class CanvasRenderer extends Renderer {
                 this.ctx.textAlign = 'left';
             }
         }
+
+        // 延迟3秒保存PDF文件
         setTimeout(() => {
             this.jspdfCtx.save("a4.pdf");
-        }, 3000)
+        }, 5000)
 
     }
 
@@ -641,12 +705,16 @@ export class CanvasRenderer extends Renderer {
 
     // 格式化路径
     formatPath(paths: Path[]): void {
+
+
         paths.forEach((point, index) => {
             const start: Vector = isBezierCurve(point) ? point.start : point;
             if (index === 0) {
                 this.ctx.moveTo(start.x, start.y);
+              
             } else {
                 this.ctx.lineTo(start.x, start.y);
+             
             }
 
             if (isBezierCurve(point)) {
@@ -658,6 +726,7 @@ export class CanvasRenderer extends Renderer {
                     point.end.x,
                     point.end.y
                 );
+               
             }
         });
     }
@@ -774,11 +843,30 @@ export class CanvasRenderer extends Renderer {
         }
     }
 
+    /**
+     * 渲染实线边框
+     * @param color - 边框颜色
+     * @param side - 边的位置(0-3,分别代表上右下左)
+     * @param curvePoints - 边框曲线点
+     */
     async renderSolidBorder(color: Color, side: number, curvePoints: BoundCurves): Promise<void> {
+        console.log('renderSolidBorder实线边框信息', color, side, curvePoints, parsePathForBorder(curvePoints, side))
+
+        // 设置PDF边框颜色
+        // const [r, g, b] = color;
+        // this.jspdfCtx.setDrawColor('#dd2526');
+        // 解析边框路径
         this.path(parsePathForBorder(curvePoints, side));
+        // 设置填充颜色
         this.ctx.fillStyle = asString(color);
+     
+        // 填充路径
         this.ctx.fill();
+        this.jspdfCtx.fill();
     }
+
+    // 渲染双线边框
+
 
     async renderDoubleBorder(color: Color, width: number, side: number, curvePoints: BoundCurves): Promise<void> {
         if (width < 3) {
@@ -831,7 +919,7 @@ export class CanvasRenderer extends Renderer {
                 // 获取背景区域的坐标和尺寸
                 const startPoint = backgroundPaintingArea[0] as Vector;
                 const endPoint = backgroundPaintingArea[2] as Vector;
-                console.log('backgroundPaintingArea', backgroundPaintingArea)
+                // console.log('backgroundPaintingArea', backgroundPaintingArea)
                 // 转换坐标为 pt 单位
                 const x = this.pxToPt(startPoint.x);
                 const y = this.pxToPt(startPoint.y);
@@ -839,7 +927,7 @@ export class CanvasRenderer extends Renderer {
                 const height = this.pxToPt(endPoint.y - startPoint.y);
 
                 // 在PDF中渲染背景色
-                this.jspdfCtx.setFillColor('#efefef');
+                this.jspdfCtx.setFillColor(asString(styles.backgroundColor));
                 this.jspdfCtx.rect(
                     x,           // x 坐标
                     y,           // y 坐标
@@ -879,9 +967,9 @@ export class CanvasRenderer extends Renderer {
 
         // 处理四个边框
         let side = 0;
-        console.log('borders',borders)
+        console.log('borders', borders)
         for (const border of borders) {
-        
+
             // 只处理有效的边框(有样式、颜色且宽度大于0)
             if (border.style !== BORDER_STYLE.NONE && !isTransparent(border.color) && border.width > 0) {
                 // 根据不同的边框样式进行Canvas渲染
@@ -904,12 +992,15 @@ export class CanvasRenderer extends Renderer {
                 } else if (border.style === BORDER_STYLE.DOUBLE) {
                     await this.renderDoubleBorder(border.color, border.width, side, paint.curves);
                 } else {
+                    console.log('renderSolidBorder实线', border.color, side, paint.curves)
                     await this.renderSolidBorder(border.color, side, paint.curves);
                 }
 
                 // PDF边框渲染设置
                 const color = border.color;
-                this.jspdfCtx.setDrawColor(color);
+    
+                // console.log('color', color, asString(color))
+                this.jspdfCtx.setDrawColor(asString(color));
                 this.jspdfCtx.setLineWidth(this.pxToPt(border.width));
 
                 // 获取边框的起点和终点坐标
