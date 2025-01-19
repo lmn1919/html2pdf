@@ -1,15 +1,15 @@
 {
-  "title": "html2canvas",
-  "name": "html2canvas",
-  "description": "Screenshots with JavaScript",
-  "main": "dist/html2canvas.js",
-  "module": "dist/html2canvas.esm.js",
+  "title": "html2pdf",
+  "name": "html2pdf",
+  "description": "HTML to PDF",
+  "main": "dist/html2pdf.js",
+  "module": "dist/html2pdf.esm.js",
   "typings": "dist/types/index.d.ts",
-  "browser": "dist/html2canvas.js",
+  "browser": "dist/html2pdf.js",
   "version": "1.4.1",
   "author": {
-    "name": "Niklas von Hertzen",
-    "email": "niklasvh@gmail.com",
+    "name": "lfc",
+    "email": "lfc191910@gmail.com",
     "url": "https://hertzen.com"
   },
   "engines": {
@@ -17,10 +17,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:niklasvh/html2canvas.git"
+    "url": "git@github.com:lmn1919/html2pdf.git"
   },
   "bugs": {
-    "url": "https://github.com/niklasvh/html2canvas/issues"
+    "url": "https://github.com/lmn1919/html2pdf/issues"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.3",

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>html2pdf.js Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <div id="content">
+        <h1>Hello, World!</h1>
+        <p>This is a sample HTML content.</p>
+    </div>
+    <button onclick="generatePDF()">Download PDF</button>
+
+    <script>
+        function generatePDF() {
+            const element = document.getElementById('content');
+            html2pdf()
+                .from(element)
+                .save('output.pdf');
+        }
+    </script>
+</body>
+</html>
