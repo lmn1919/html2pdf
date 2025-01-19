@@ -17,11 +17,11 @@ export type Options = CloneOptions &
         removeContainer?: boolean;
     };
 
-const html2canvas = (element: HTMLElement, options: Partial<Options> = {}): Promise<HTMLCanvasElement> => {
+const html2pdf = (element: HTMLElement, options: Partial<Options> = {}): Promise<HTMLCanvasElement> => {
     return renderElement(element, options);
 };
 
-export default html2canvas;
+export default html2pdf;
 
 if (typeof window !== 'undefined') {
     CacheStorage.setContext(window);

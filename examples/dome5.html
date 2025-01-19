@@ -39,7 +39,7 @@
             width: 40%;
         }
 
-        code.hljs {
+        .hljs {
             background: #2b2b2b;
             color: #f8f8f2;
         }
@@ -52,6 +52,16 @@
             word-break: normal;
             display: block;
             overflow-x: auto;
+            color: #333;
+            background: #f7f7f7;
+        }
+
+        .code-block-extension-codeLine {
+            display: block;
+            padding: 0 12px;
+            margin: 0;
+            line-height: 1.5;
+            font-size: 14px;
             color: #333;
             background: #f7f7f7;
         }
@@ -108,7 +118,7 @@
         </table>
 
 
-        <!-- <code class="hljs language-typescript code-block-extension-codeShowNum" lang="typescript"><span class="code-block-extension-codeLine" data-line-num="1"><span class="hljs-comment">// 灰度化算法：加权灰度化</span></span>
+        <code class="hljs language-typescript code-block-extension-codeShowNum" lang="typescript"><span class="code-block-extension-codeLine" data-line-num="1"><span class="hljs-comment">// 灰度化算法：加权灰度化</span></span>
       <span class="code-block-extension-codeLine" data-line-num="2"><span class="hljs-keyword">const</span> adaptiveGrayscale = (<span class="hljs-attr">imageData</span>: <span class="hljs-title class_">ImageData</span>): <span class="hljs-function"><span class="hljs-params">ImageData</span> =&gt;</span> {</span>
       <span class="code-block-extension-codeLine" data-line-num="3">    <span class="hljs-keyword">const</span> data = imageData.<span class="hljs-property">data</span>;</span>
       <span class="code-block-extension-codeLine" data-line-num="4">    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; data.<span class="hljs-property">length</span>; i += <span class="hljs-number">4</span>) {</span>
@@ -140,7 +150,7 @@
       <span class="code-block-extension-codeLine" data-line-num="30">    }</span>
       <span class="code-block-extension-codeLine" data-line-num="31">    <span class="hljs-keyword">return</span> imageData;</span>
       <span class="code-block-extension-codeLine" data-line-num="32">};</span>
-      </code> -->
+      </code>
         <!-- <div>
 
             <img class="img-center"
@@ -153,9 +163,9 @@
         </canvas> -->
 
     </div>
-    <script type="text/javascript" src="../dist/html2canvas.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script type="text/javascript" src="../dist/html2pdf.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> -->
     <script type="text/javascript">
         // const canvas = document.getElementById('myCanvas');
         // const ctx = canvas.getContext('2d');
@@ -183,7 +193,7 @@
         // ctx.stroke();
 
 
-        html2canvas(document.body, {
+        html2pdf(document.body, {
             useCORS: true,
             scale: 2
         }).then(function (canvas) {
@@ -192,10 +202,10 @@
         });
 
 
-        const element = document.getElementById('content');
-        html2pdf()
-            .from(element)
-            .save('output.pdf');
+        // const element = document.getElementById('content');
+        // html2pdf()
+        //     .from(element)
+        //     .save('output.pdf');
         // const { jsPDF } = window.jspdf;
         // var doc = new jsPDF();
 
