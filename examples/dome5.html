@@ -13,9 +13,9 @@
 
         h1 {
             /* border-bottom:2px solid white; */
-            border: 1px solid red;
+            /*   border: 1px solid red; */
             font-size: 24px;
-            background: #12c96b;
+            /* background: #12c96b; */
         }
 
         h2 {
@@ -153,10 +153,12 @@
         </canvas> -->
 
     </div>
-    <script type="text/javascript" src="../dist/html2canvas.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script type="text/javascript" src="../dist/html2pdf.js"></script>
+    <script type="text/javascript" src="./SourceHanSansSC-Normal-Min-normal.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> -->
     <script type="text/javascript">
+     
         // const canvas = document.getElementById('myCanvas');
         // const ctx = canvas.getContext('2d');
 
@@ -181,21 +183,35 @@
         // // 绘制圆角矩形边框
         // drawRoundedRect(50, 50, 100, 100, 20);
         // ctx.stroke();
+       
 
 
-        html2canvas(document.body, {
-            useCORS: true,
-            scale: 2
-        }).then(function (canvas) {
 
-            document.body.appendChild(canvas);
-        });
+        // 等待字体加载并执行转换
+        async function convertToPDF() {
+            console.log(window.fontBase64,'window.fontBase64')
+            html2pdf(document.body, {
+                useCORS: true,
+                scale: 1,
+                fontConfig:{
+                    fontFamily: 'SourceHanSansSC-Normal-Min',
+                    fontBase64: window.fontBase64,
+                    fontUrl:'',
+                    fontWeight:400,
+                    fontStyle:'normal'
+                },
+            }).then(function (canvas) {
+                console.log(window.fontBase64, 'window.fontBase64');
+                document.body.appendChild(canvas);
+            });
+        }
 
+        convertToPDF();
 
-        const element = document.getElementById('content');
-        html2pdf()
-            .from(element)
-            .save('output.pdf');
+        // const element = document.getElementById('content');
+        // html2pdf()
+        //     .from(element)
+        //     .save('output.pdf');
         // const { jsPDF } = window.jspdf;
         // var doc = new jsPDF();
 

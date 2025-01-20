@@ -51,6 +51,14 @@ export type RenderConfigurations = RenderOptions & {
     backgroundColor: Color | null;
 };
 
+export interface FontConfig {
+    fontFamily: string;
+    fontBase64: string;
+    fontUrl: string;
+    fontWeight: number;
+    fontStyle: string;
+}
+
 export interface RenderOptions {
     scale: number;
     canvas?: HTMLCanvasElement;
@@ -58,6 +66,7 @@ export interface RenderOptions {
     y: number;
     width: number;
     height: number;
+    fontConfig: FontConfig;
 }
 
 // const MASK_OFFSET = 10000;
@@ -344,6 +353,7 @@ export class CanvasRenderer extends Renderer {
                 backgroundColor: container.backgroundColor,
                 x: 0,
                 y: 0,
+                fontConfig: this.options.fontConfig,
                 width: container.width,
                 height: container.height
             });
