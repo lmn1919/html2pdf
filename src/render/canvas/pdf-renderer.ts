@@ -1,6 +1,6 @@
-// 导入必要的依赖
 import { jsPDF } from "jspdf"; // 用于生成PDF文档
-import "../../Alibaba_PuHuiTi-normal"; // 导入阿里巴巴普惠体字体
+
+import "../../SourceHanSansSC-Normal-Min-normal"; // 导入阿里巴巴普惠体字体
 import { contains } from '../../core/bitwise'; // 位运算工具函数
 import { Context } from '../../core/context'; // 上下文对象
 import { CSSParsedDeclaration } from '../../css'; // CSS解析声明
@@ -31,6 +31,7 @@ import { ImageElementContainer } from '../../dom/replaced-elements/image-element
 import { CHECKBOX, INPUT_COLOR, InputElementContainer, RADIO } from '../../dom/replaced-elements/input-element-container'; // Input元素容器
 import { SVGElementContainer } from '../../dom/replaced-elements/svg-element-container'; // SVG元素容器
 import { TextContainer } from '../../dom/text-container'; // 文本容器
+
 import { calculateBackgroundRendering, getBackgroundValueForIndex } from '../background'; // 背景渲染计算
 import { BezierCurve, isBezierCurve } from '../bezier-curve'; // 贝塞尔曲线
 import {
@@ -48,9 +49,18 @@ import { Renderer } from '../renderer'; // 渲染器基类
 import { ElementPaint, parseStackingContexts, StackingContext } from '../stacking-context'; // 堆叠上下文
 import { Vector } from '../vector'; // 向量
 
+interface FontConfig {
+    fontFamily: string;
+    fontBase64: string;
+    fontUrl: string;
+    fontWeight: number;
+    fontStyle: string;
+}
+
 // 渲染配置接口,继承自RenderOptions并添加backgroundColor属性
 export type RenderConfigurations = RenderOptions & {
     backgroundColor: Color | null;
+    fontConfig: FontConfig; // 字体
 };
 
 // 渲染选项接口
@@ -61,6 +71,7 @@ export interface RenderOptions {
     y: number; // y坐标  
     width: number; // 宽度
     height: number; // 高度
+   
 }
 
 // 遮罩偏移常量
@@ -89,13 +100,21 @@ export class CanvasRenderer extends Renderer {
         // 初始化 jsPDF
         this.jspdfCtx = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
-            unit: 'pt',  // 使用点作为单位
-            format: [pageWidth, pageHeight],  // 使用转换后的尺寸
+            unit: 'pt',
+            format: [pageWidth, pageHeight],
             hotfixes: ["px_scaling"]
         });
-
-        // 设置默认字体
-        // this.jspdfCtx.setFont('Alibaba_PuHuiTi');
+        this.jspdfCtx.setFont('SourceHanSansSC-Normal-Min');
+        // 确保字体已加载并注册到 jsPDF
+        // if (options.fontConfig) {
+        //     try {
+        //         this.loadFont();
+        //     } catch (error) {
+        //         console.warn('Failed to set font:', error);
+        //         // 如果设置失败，使用默认字体
+        //         this.jspdfCtx.setFont('Helvetica');
+        //     }
+        // }
 
         // 将 pxToPt 保存为实例属性，以便其他方法使用
         this.pxToPt = pxToPt;
@@ -117,6 +136,47 @@ export class CanvasRenderer extends Renderer {
             `Canvas renderer initialized (${options.width}x${options.height}) with scale ${options.scale}`
         );
     }
+
+
+    async loadFont() {
+        let fontData;
+
+        if (this.options.fontConfig.fontBase64) {
+            // 直接使用 Base64 编码
+            fontData = this.options.fontConfig.fontBase64;
+        } else if (this.options.fontConfig.fontUrl) {
+            // 从 URL 加载字体
+            fontData = await this.loadFontFromURL(this.options.fontConfig.fontUrl);
+        } else {
+            throw new Error('未提供有效的字体文件 Base64 编码或 URL');
+        }
+
+        // 将字体添加到 jsPDF
+        this.addFontToJsPDF(fontData as string);
+    }
+
+    async loadFontFromURL(url:string) {
+        // 使用 fetch 加载远程字体文件
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('字体文件加载失败');
+        }
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader:any = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]); // 提取 Base64 数据
+            reader.onerror = () => reject(new Error('字体文件读取失败'));
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    addFontToJsPDF(fontData:string) {
+        const { fontFamily,fontWeight,fontStyle } = this.options.fontConfig;
+        this.jspdfCtx.addFileToVFS(`${fontFamily}.ttf`, fontData); // 将字体添加到虚拟文件系统
+        this.jspdfCtx.addFont(`${fontFamily}.ttf`, fontFamily, fontStyle, fontWeight); // 注册字体
+        this.jspdfCtx.setFont(fontFamily); // 设置当前字体
+    }
+
 
     // 应用效果数组
     applyEffects(effects: IElementEffect[]): void {
@@ -184,13 +244,14 @@ export class CanvasRenderer extends Renderer {
         if (paint.container.styles.isVisible()) {
             await this.renderNodeBackgroundAndBorders(paint);
             await this.renderNodeContent(paint);
+
         }
     }
 
     // 渲染带有字母间距的文本
     renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, baseline: number): void {
         if (letterSpacing === 0) {
-            const extraPadding = text.text.startsWith('•') ? -10 : 0;
+            const extraPadding = text.text.startsWith('•') ? -15 : 0;
             const extraPaddingPt = text.text.startsWith('•') ? (text.bounds.height + 2) / 2 : 0;
             this.ctx.fillText(text.text, text.bounds.left + extraPadding, text.bounds.top + baseline);
 
@@ -239,13 +300,13 @@ export class CanvasRenderer extends Renderer {
     // 渲染文本节点
     async renderTextNode(text: TextContainer, styles: CSSParsedDeclaration): Promise<void> {
         const [font, fontFamily, fontSize] = this.createFontStyle(styles);
-        // console.log('渲染文章',styles)
         this.ctx.font = font;
 
-        // let fontWeight=styles.split(" ")
-        this.jspdfCtx.setFont('Alibaba_PuHuiTi');
+        // 确保字体设置正确
+        if (this.options.fontConfig.fontFamily) {
+            this.jspdfCtx.setFont(this.options.fontConfig.fontFamily);
+        }
 
-        // 转换字体大小为 pt 单位
         const fontSizePt = this.pxToPt(styles.fontSize.number);
         this.jspdfCtx.setFontSize(fontSizePt);
 
@@ -394,27 +455,27 @@ export class CanvasRenderer extends Renderer {
             // 计算图片在PDF中的位置和尺寸(转换为pt单位)
             const pdfBox = {
                 left: this.pxToPt(box.left),
-                top: this.pxToPt(box.top), 
+                top: this.pxToPt(box.top),
                 width: this.pxToPt(box.width),
                 height: this.pxToPt(box.height)
             };
 
 
-            console.log('绘制图片',image)
+            console.log('绘制图片', image)
 
             // 如果是HTMLImageElement,则直接添加图片
-            if(image instanceof HTMLImageElement) {
+            if (image instanceof HTMLImageElement) {
                 this.jspdfCtx.addImage(
                     image,
                     'PNG',
                     pdfBox.left,
                     pdfBox.top,
-                    pdfBox.width, 
+                    pdfBox.width,
                     pdfBox.height
                 );
             }
             // 如果是Canvas元素,则先转换为base64再添加
-            else if(image instanceof HTMLCanvasElement) {
+            else if (image instanceof HTMLCanvasElement) {
                 const imgData = image.toDataURL('image/png');
                 this.jspdfCtx.addImage(
                     imgData,
@@ -471,6 +532,7 @@ export class CanvasRenderer extends Renderer {
         if (container instanceof IFrameElementContainer && container.tree) {
             const iframeRenderer = new CanvasRenderer(this.context, {
                 scale: this.options.scale,
+                fontConfig: this.options.fontConfig,
                 backgroundColor: container.backgroundColor,
                 x: 0,
                 y: 0,
@@ -626,9 +688,7 @@ export class CanvasRenderer extends Renderer {
         }
 
         // 延迟3秒保存PDF文件
-        setTimeout(() => {
-            this.jspdfCtx.save("a4.pdf");
-        }, 5000)
+
 
     }
 
@@ -682,6 +742,11 @@ export class CanvasRenderer extends Renderer {
         for (const child of stack.positiveZIndex) {
             await this.renderStack(child);
         }
+
+
+        // 生成PDF文件
+        this.jspdfCtx.save("a4.pdf");
+
     }
 
     // 创建遮罩
@@ -711,10 +776,10 @@ export class CanvasRenderer extends Renderer {
             const start: Vector = isBezierCurve(point) ? point.start : point;
             if (index === 0) {
                 this.ctx.moveTo(start.x, start.y);
-              
+
             } else {
                 this.ctx.lineTo(start.x, start.y);
-             
+
             }
 
             if (isBezierCurve(point)) {
@@ -726,7 +791,7 @@ export class CanvasRenderer extends Renderer {
                     point.end.x,
                     point.end.y
                 );
-               
+
             }
         });
     }
@@ -779,6 +844,20 @@ export class CanvasRenderer extends Renderer {
                         'repeat'
                     ) as CanvasPattern;
                     this.renderRepeat(path, pattern, x, y);
+
+                    // PDF 背景图片渲染
+                    const xPt = this.pxToPt(x);
+                    const yPt = this.pxToPt(y);
+                    const widthPt = this.pxToPt(width);
+                    const heightPt = this.pxToPt(height);
+                    this.jspdfCtx.addImage(
+                        image,
+                        'JPEG',
+                        xPt,
+                        yPt,
+                        widthPt,
+                        heightPt
+                    );
                 }
             } else if (isLinearGradient(backgroundImage)) {
                 const [path, x, y, width, height] = calculateBackgroundRendering(container, index, [null, null, null]);
@@ -850,7 +929,7 @@ export class CanvasRenderer extends Renderer {
      * @param curvePoints - 边框曲线点
      */
     async renderSolidBorder(color: Color, side: number, curvePoints: BoundCurves): Promise<void> {
-        console.log('renderSolidBorder实线边框信息', color, side, curvePoints, parsePathForBorder(curvePoints, side))
+        // console.log('renderSolidBorder实线边框信息', color, side, curvePoints, parsePathForBorder(curvePoints, side))
 
         // 设置PDF边框颜色
         // const [r, g, b] = color;
@@ -859,7 +938,7 @@ export class CanvasRenderer extends Renderer {
         this.path(parsePathForBorder(curvePoints, side));
         // 设置填充颜色
         this.ctx.fillStyle = asString(color);
-     
+
         // 填充路径
         this.ctx.fill();
         this.jspdfCtx.fill();
@@ -967,7 +1046,6 @@ export class CanvasRenderer extends Renderer {
 
         // 处理四个边框
         let side = 0;
-        console.log('borders', borders)
         for (const border of borders) {
 
             // 只处理有效的边框(有样式、颜色且宽度大于0)
@@ -992,13 +1070,13 @@ export class CanvasRenderer extends Renderer {
                 } else if (border.style === BORDER_STYLE.DOUBLE) {
                     await this.renderDoubleBorder(border.color, border.width, side, paint.curves);
                 } else {
-                    console.log('renderSolidBorder实线', border.color, side, paint.curves)
+                    // console.log('renderSolidBorder实线', border.color, side, paint.curves)
                     await this.renderSolidBorder(border.color, side, paint.curves);
                 }
 
                 // PDF边框渲染设置
                 const color = border.color;
-    
+
                 // console.log('color', color, asString(color))
                 this.jspdfCtx.setDrawColor(asString(color));
                 this.jspdfCtx.setLineWidth(this.pxToPt(border.width));

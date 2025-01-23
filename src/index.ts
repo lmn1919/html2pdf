@@ -7,7 +7,6 @@ import { isBodyElement, isHTMLElement, parseTree } from './dom/node-parser';
 import { ForeignObjectRenderer } from './render/canvas/foreignobject-renderer';
 import { CanvasRenderer, RenderConfigurations, RenderOptions } from './render/canvas/pdf-renderer';
 // import { Console } from 'console';
-
 export type Options = CloneOptions &
     WindowOptions &
     RenderOptions &
@@ -15,6 +14,7 @@ export type Options = CloneOptions &
         backgroundColor: string | null;
         foreignObjectRendering: boolean;
         removeContainer?: boolean;
+        fontConfig?: object;
     };
 
 const html2pdf = (element: HTMLElement, options: Partial<Options> = {}): Promise<HTMLCanvasElement> => {
@@ -28,6 +28,7 @@ if (typeof window !== 'undefined') {
 }
 
 const renderElement = async (element: HTMLElement, opts: Partial<Options>): Promise<HTMLCanvasElement> => {
+
     if (!element || typeof element !== 'object') {
         return Promise.reject('Invalid element provided as first argument');
     }
@@ -109,7 +110,14 @@ const renderElement = async (element: HTMLElement, opts: Partial<Options>): Prom
         x: (opts.x ?? 0) + left,
         y: (opts.y ?? 0) + top,
         width: opts.width ?? Math.ceil(width),
-        height: opts.height ?? Math.ceil(height)
+        height: opts.height ?? Math.ceil(height),
+        fontConfig: opts.fontConfig ?? {
+            fontFamily: 'SourceHanSansSC-Normal-Min',
+            fontBase64: '',
+            fontUrl: '',
+            fontWeight: 400,
+            fontStyle: 'normal'
+        }
     };
 
     let canvas;

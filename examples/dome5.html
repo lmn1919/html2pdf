@@ -13,9 +13,9 @@
 
         h1 {
             /* border-bottom:2px solid white; */
-            border: 1px solid red;
+            /*   border: 1px solid red; */
             font-size: 24px;
-            background: #12c96b;
+            /* background: #12c96b; */
         }
 
         h2 {
@@ -118,7 +118,7 @@
         </table>
 
 
-        <code class="hljs language-typescript code-block-extension-codeShowNum" lang="typescript"><span class="code-block-extension-codeLine" data-line-num="1"><span class="hljs-comment">// 灰度化算法：加权灰度化</span></span>
+        <div class="hljs language-typescript code-block-extension-codeShowNum" lang="typescript"><span class="code-block-extension-codeLine" data-line-num="1"><span class="hljs-comment">// 灰度化算法：加权灰度化</span></span>
       <span class="code-block-extension-codeLine" data-line-num="2"><span class="hljs-keyword">const</span> adaptiveGrayscale = (<span class="hljs-attr">imageData</span>: <span class="hljs-title class_">ImageData</span>): <span class="hljs-function"><span class="hljs-params">ImageData</span> =&gt;</span> {</span>
       <span class="code-block-extension-codeLine" data-line-num="3">    <span class="hljs-keyword">const</span> data = imageData.<span class="hljs-property">data</span>;</span>
       <span class="code-block-extension-codeLine" data-line-num="4">    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; data.<span class="hljs-property">length</span>; i += <span class="hljs-number">4</span>) {</span>
@@ -150,7 +150,7 @@
       <span class="code-block-extension-codeLine" data-line-num="30">    }</span>
       <span class="code-block-extension-codeLine" data-line-num="31">    <span class="hljs-keyword">return</span> imageData;</span>
       <span class="code-block-extension-codeLine" data-line-num="32">};</span>
-      </code>
+      </div>
         <!-- <div>
 
             <img class="img-center"
@@ -164,9 +164,11 @@
 
     </div>
     <script type="text/javascript" src="../dist/html2pdf.js"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> -->
+    <script type="text/javascript" src="./SourceHanSansSC-Normal-Min-normal.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> -->
     <script type="text/javascript">
+     
         // const canvas = document.getElementById('myCanvas');
         // const ctx = canvas.getContext('2d');
 
@@ -191,16 +193,30 @@
         // // 绘制圆角矩形边框
         // drawRoundedRect(50, 50, 100, 100, 20);
         // ctx.stroke();
+       
 
 
-        html2pdf(document.body, {
-            useCORS: true,
-            scale: 2
-        }).then(function (canvas) {
 
-            document.body.appendChild(canvas);
-        });
+        // 等待字体加载并执行转换
+        async function convertToPDF() {
+            // console.log(window.fontBase64,'window.fontBase64')
+            html2pdf(document.getElementsByClassName('.content'), {
+                useCORS: true,
+                scale: 1,
+                fontConfig:{
+                    fontFamily: 'SourceHanSansSC-Normal-Min',
+                    fontBase64: window.fontBase64,
+                    fontUrl:'',
+                    fontWeight:400,
+                    fontStyle:'normal'
+                },
+            }).then(function (canvas) {
+                console.log(window.fontBase64, 'window.fontBase64');
+                document.body.appendChild(canvas);
+            });
+        }
 
+        convertToPDF();
 
         // const element = document.getElementById('content');
         // html2pdf()
