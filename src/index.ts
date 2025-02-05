@@ -4,6 +4,7 @@ import { Bounds, parseBounds, parseDocumentSize } from './css/layout/bounds';
 import { COLORS, isTransparent, parseColor } from './css/types/color';
 import { CloneConfigurations, CloneOptions, DocumentCloner, WindowOptions } from './dom/document-cloner';
 import { isBodyElement, isHTMLElement, parseTree } from './dom/node-parser';
+import { FontConfig } from './render/canvas/canvas-renderer2';
 import { ForeignObjectRenderer } from './render/canvas/foreignobject-renderer';
 import { CanvasRenderer, RenderConfigurations, RenderOptions } from './render/canvas/pdf-renderer';
 // import { Console } from 'console';
@@ -14,7 +15,7 @@ export type Options = CloneOptions &
         backgroundColor: string | null;
         foreignObjectRendering: boolean;
         removeContainer?: boolean;
-        fontConfig?: object;
+        fontConfig?: FontConfig;
     };
 
 const html2pdf = (element: HTMLElement, options: Partial<Options> = {}): Promise<HTMLCanvasElement> => {
@@ -113,8 +114,8 @@ const renderElement = async (element: HTMLElement, opts: Partial<Options>): Prom
         height: opts.height ?? Math.ceil(height),
         fontConfig: opts.fontConfig ?? {
             fontFamily: 'SourceHanSansSC-Normal-Min',
-            fontBase64: '',
-            fontUrl: '',
+            fontBase64: '', // window.fontBase64
+            fontUrl: 'https://oss.jspdf.top/font/SourceHanSansCN-Medium.ttf',
             fontWeight: 400,
             fontStyle: 'normal'
         }

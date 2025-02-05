@@ -5,6 +5,12 @@
     <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <style>
+        .byte-icon,
+        .code-block-extension-foldBtn {
+            height: 10px;
+            width: 10px;
+        }
+
         div {
             padding: 20px;
             margin: 0 auto;
@@ -13,7 +19,7 @@
 
         h1 {
             /* border-bottom:2px solid white; */
-            /*   border: 1px solid red; */
+              border: 1px solid red;
             font-size: 24px;
             /* background: #12c96b; */
         }
@@ -82,6 +88,10 @@
         </ul>
         <p>这类的开源工具绝大多数情况下，只需要按照说明文档使用，基本可以做到开箱即用，极大的简化了相关工作的复杂性。</p>
         <p>但这样的便捷也很容易导致大家忽视其背后的原理及实现，只是知其然而不知其所以然。</p>
+        <p>但是真要用在企业级应用我们需要考虑全部的复杂性，你至少要吃透官方文档的大部分内容，
+            最好是写几个稍微复杂点的Demo，光是吃透文档就需要至少10小时以上的成本你才能彻底在企业级应用all in tailwind，如果你的团队有10名前端同学，
+            你们将会付出100个小时的代价，这些代价不光是个人的，更是企业的损失，而花了这100小时掌握之后能够靠那一点点便捷提速弥补损失吗？不能。或许100小时早就用以前的方式写完了全部样式。团队还会扩大，新招进来的同学还得培训一下。
+        </p>
         <p class="text-center">不过，通常情况下这样做也没有什么大问题，只要能够满足需求就可以了，毕竟现在的开源工具如此之多，如果每个开源工具都去深入了解，那么对时间和精力也是一个巨大的消耗。</p>
 
 
@@ -162,13 +172,436 @@
 
         </canvas> -->
 
+
+        <div id="article-root" itemprop="articleBody" class="main" data-v-7cdd11fb="">
+            <div class="article-viewer markdown-body result">
+                <style>
+                    .markdown-body {
+                        word-break: break-word;
+                        line-height: 1.8;
+                        font-weight: 400;
+                        font-size: 16px;
+                        word-spacing: 2px;
+                        letter-spacing: 2px;
+                        overflow-x: hidden;
+                        color: #3e3e3e;
+                        background-image: linear-gradient(90deg, rgba(50, 0, 0, .05) 3%, transparent 0), linear-gradient(1turn, rgba(50, 0, 0, .05) 3%, transparent 0);
+                        background-size: 20px 20px;
+                        background-position: 50%
+                    }
+
+                    .markdown-body h1,
+                    .markdown-body h2,
+                    .markdown-body h3,
+                    .markdown-body h4,
+                    .markdown-body h5,
+                    .markdown-body h6 {
+                        line-height: 1.5;
+                        margin-top: 35px;
+                        margin-bottom: 10px;
+                        padding-bottom: 5px
+                    }
+
+                    .markdown-body h1 {
+                        font-size: 30px;
+                        margin-bottom: 5px
+                    }
+
+                    .markdown-body h2 {
+                        padding-bottom: 12px;
+                        font-size: 24px;
+                        border-bottom: 1px solid #ececec
+                    }
+
+                    .markdown-body h3 {
+                        font-size: 18px;
+                        padding-bottom: 0
+                    }
+
+                    .markdown-body h4 {
+                        font-size: 1.2em;
+                        border-bottom: 2px solid #ef7060;
+                        word-spacing: 0 !important;
+                        letter-spacing: 0 !important;
+                        font-size: inherit;
+                        line-height: inherit;
+                        display: block;
+                        font-weight: 400;
+                        background: #ef7060;
+                        color: #fff;
+                        padding: 10px;
+                        border-top-right-radius: 3px;
+                        border-top-left-radius: 3px;
+                        margin-right: 3px
+                    }
+
+                    .markdown-body h5 {
+                        font-size: 15px
+                    }
+
+                    .markdown-body h6 {
+                        margin-top: 5px
+                    }
+
+                    .markdown-body p {
+                        line-height: inherit;
+                        margin-top: 22px;
+                        margin-bottom: 22px
+                    }
+
+                    .markdown-body img {
+                        max-width: 100%
+                    }
+
+                    .markdown-body hr {
+                        border: none;
+                        border-top: 1px solid #ddd;
+                        margin-top: 32px;
+                        margin-bottom: 32px
+                    }
+
+                    .markdown-body code {
+                        word-break: break-word;
+                        border-radius: 2px;
+                        overflow-x: auto;
+                        background-color: #fff5f5;
+                        color: #ff502c;
+                        font-size: .87em;
+                        padding: .065em .4em
+                    }
+
+                    .markdown-body code,
+                    .markdown-body pre {
+                        font-family: Menlo, Monaco, Consolas, Courier New, monospace
+                    }
+
+                    .markdown-body pre {
+                        overflow: auto;
+                        position: relative;
+                        line-height: 1.75
+                    }
+
+                    .markdown-body pre>code {
+                        font-size: 12px;
+                        padding: 15px 12px;
+                        margin: 0;
+                        word-break: normal;
+                        display: block;
+                        overflow-x: auto;
+                        color: #333;
+                        background: #f8f8f8
+                    }
+
+                    .markdown-body a {
+                        text-decoration: none;
+                        color: #0269c8;
+                        border-bottom: 1px solid #d1e9ff
+                    }
+
+                    .markdown-body a:active,
+                    .markdown-body a:hover {
+                        color: #275b8c
+                    }
+
+                    .markdown-body table {
+                        display: inline-block !important;
+                        font-size: 12px;
+                        width: auto;
+                        max-width: 100%;
+                        overflow: auto;
+                        border: 1px solid #f6f6f6
+                    }
+
+                    .markdown-body thead {
+                        background: #f6f6f6;
+                        color: #000;
+                        text-align: left
+                    }
+
+                    .markdown-body tr:nth-child(2n) {
+                        background-color: #fcfcfc
+                    }
+
+                    .markdown-body td,
+                    .markdown-body th {
+                        padding: 12px 7px;
+                        line-height: 24px
+                    }
+
+                    .markdown-body td {
+                        min-width: 120px
+                    }
+
+                    .markdown-body blockquote {
+                        color: #666;
+                        padding: 1px 23px;
+                        margin: 22px 0;
+                        border-left: 4px solid #cbcbcb;
+                        background-color: #f8f8f8
+                    }
+
+                    .markdown-body blockquote:after {
+                        display: block;
+                        content: ""
+                    }
+
+                    .markdown-body blockquote>p {
+                        margin: 10px 0
+                    }
+
+                    .markdown-body ol,
+                    .markdown-body ul {
+                        padding-left: 28px
+                    }
+
+                    .markdown-body ol li,
+                    .markdown-body ul li {
+                        margin-bottom: 0;
+                        list-style: inherit
+                    }
+
+                    .markdown-body ol li .task-list-item,
+                    .markdown-body ul li .task-list-item {
+                        list-style: none
+                    }
+
+                    .markdown-body ol li .task-list-item ol,
+                    .markdown-body ol li .task-list-item ul,
+                    .markdown-body ul li .task-list-item ol,
+                    .markdown-body ul li .task-list-item ul {
+                        margin-top: 0
+                    }
+
+                    .markdown-body ol ol,
+                    .markdown-body ol ul,
+                    .markdown-body ul ol,
+                    .markdown-body ul ul {
+                        margin-top: 3px
+                    }
+
+                    .markdown-body ol li {
+                        padding-left: 6px
+                    }
+
+                    @media (max-width:720px) {
+                        .markdown-body h1 {
+                            font-size: 24px
+                        }
+
+                        .markdown-body h2 {
+                            font-size: 20px
+                        }
+
+                        .markdown-body h3 {
+                            font-size: 18px
+                        }
+                    }
+                </style>
+                <style data-highlight="" data-highlight-key="monokai">
+                    .markdown-body pre,
+                    .markdown-body pre>code.hljs {
+                        background: #272822;
+                        color: #ddd
+                    }
+
+                    .hljs-keyword,
+                    .hljs-literal,
+                    .hljs-name,
+                    .hljs-selector-tag,
+                    .hljs-strong,
+                    .hljs-tag {
+                        color: #f92672
+                    }
+
+                    .hljs-code {
+                        color: #66d9ef
+                    }
+
+                    .hljs-class .hljs-title {
+                        color: #fff
+                    }
+
+                    .hljs-attribute,
+                    .hljs-link,
+                    .hljs-regexp,
+                    .hljs-symbol {
+                        color: #bf79db
+                    }
+
+                    .hljs-addition,
+                    .hljs-built_in,
+                    .hljs-builtin-name,
+                    .hljs-bullet,
+                    .hljs-emphasis,
+                    .hljs-section,
+                    .hljs-selector-attr,
+                    .hljs-selector-pseudo,
+                    .hljs-string,
+                    .hljs-subst,
+                    .hljs-template-tag,
+                    .hljs-template-variable,
+                    .hljs-title,
+                    .hljs-type,
+                    .hljs-variable {
+                        color: #a6e22e
+                    }
+
+                    .hljs-comment,
+                    .hljs-deletion,
+                    .hljs-meta,
+                    .hljs-quote {
+                        color: #75715e
+                    }
+
+                    .hljs-doctag,
+                    .hljs-keyword,
+                    .hljs-literal,
+                    .hljs-section,
+                    .hljs-selector-id,
+                    .hljs-selector-tag,
+                    .hljs-title,
+                    .hljs-type {
+                        font-weight: 700
+                    }
+                </style>
+                <p>浏览器回流重绘在开发的时候要注意什么点？什么样的代码会引起回流重绘？如何避免影响较大的回流重绘</p>
+                <p>下面就来看看</p>
+                <h2 data-id="heading-0">前置知识</h2>
+                <ol>
+                    <li>浏览器解析 HTML（标记化、建树算法），生成 DOM 树，解析 CSS，生成 CSSOM 树</li>
+                    <li>DOM 和 CSSOM 合并就产生了渲染树（Render Tree），期间会进行计算节点的坐标位置
+                        值得注意的是，这棵渲染树中包含可见元素，对于 head 标签和设置了 <code>display: none</code> 的元素，将不会
+                        被放入其中。</li>
+                    <li>依据 render tree 进行渲染绘制到屏幕上
+                        <blockquote>
+                            <p>在渲染过程中浏览器也遇到了首屏问题，或者页面过大的问题。对此浏览器的优化方式是：图层分块解决页面过大问题；首次绘制采用低分辨率的图片，等到页面加载完毕再替换成高分辨率的图片解决首次绘制图块慢的问题；其中的合成线程会选择视口附近的图块，来进行渲染。都不会直接渲染整个网站的资源，对于渲染有需求的场景可以采用类似的优化策略，比如：大数据的表格
+                            </p>
+                        </blockquote>
+                    </li>
+                </ol>
+                <h3 data-id="heading-1">回流(Reflow)</h3>
+                <p>浏览器重新计算元素的几何属性和位置的过程</p>
+                <p>回流时会计算节点的确切位置和几何属性，这个过程是非常消耗性能的</p>
+                <ul>
+                    <li><strong>触发时机</strong>：
+                        <ul>
+                            <li>页面首次渲染</li>
+                            <li>DOM 元素几何属性变化，常见的几何属性有
+                                <code>width</code>、<code>height</code>、<code>padding</code>、<code>margin</code>、<code>left</code>、<code>top</code>、<code>border</code>
+                                等等, 这个很好理解</li>
+                            <li>DOM 树结构变化：添加节点、删除节点或移动节点</li>
+                            <li>读写 <code>offset</code>、<code>scroll</code>、<code>client</code> 等属性</li>
+                            <li>调用 <code>window.getComputedStyle</code> 方法</li>
+                            <li>浏览器窗口大小变化</li>
+                        </ul>
+                    </li>
+                </ul>
+                <h3 data-id="heading-2">重绘(Repaint)</h3>
+                <p>浏览器重新绘制元素外观的过程，当 DOM 的修改导致了样式的变化，且没有影响几何属性的时候，会导致重绘 (repaint)</p>
+                <ul>
+                    <li><strong>触发时机</strong>：
+                        <ul>
+                            <li>修改元素的背景颜色、文字颜色、边框颜色等，没有影响几何属性的时候，例如：<code>color</code>、<code>visibility</code>、<code>filters</code>
+                                等</li>
+                        </ul>
+                    </li>
+                </ul>
+                <h2 data-id="heading-3">性能的影响</h2>
+                <p><strong>回流必将引起重绘，重绘不一定会引起回流</strong></p>
+                <p>有时即使仅仅回流单一一个元素，他的父元素和子元素也会因此而触发回流，这是因为回流过程中，浏览器会从该节点递归向上回溯，然后再递归向下，这样就会导致整个渲染树的节点都会受到影响</p>
+                <p>浏览器对于频繁的回流或者重绘操作会有优化策略，通过维护一个队列，把所有引起回流和重绘的操作放入到队列中，如果队列中的任务达到一定的数量或者时间间隔，浏览器会将队列中的任务合并为一次回流或者重绘，以此来减少回流和重绘的次数，提高性能
+                </p>
+                <p>但是有时候浏览器会强制触发回流，如下：</p>
+                <pre><div class="code-block-extension-header" style="background-color: rgb(39, 40, 34);"><div class="code-block-extension-headerLeft"><div class="code-block-extension-foldBtn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z" data-name="Down"></path></svg></div><span class="code-block-extension-lang">javascript</span></div><div class="code-block-extension-headerRight"><div data-v-159ebe90="" class="render"><svg data-v-159ebe90="" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" class="icon"><path data-v-159ebe90="" fill-rule="evenodd" clip-rule="evenodd" d="M9.53955 4.17189C9.68118 4.20855 9.79179 4.31915 9.82844 4.46078L10.1056 5.53143C10.2094 5.93276 10.7788 5.93412 10.8846 5.53329L11.1678 4.46028C11.2049 4.31949 11.3152 4.20973 11.4562 4.17324L12.5321 3.89478C12.9334 3.7909 12.9348 3.22149 12.5339 3.11571L11.4557 2.83116C11.3156 2.79418 11.2061 2.68474 11.1692 2.54461L10.8846 1.46639C10.7788 1.06556 10.2094 1.06691 10.1056 1.46824L9.82709 2.54413C9.7906 2.6851 9.68084 2.79538 9.54005 2.83254L8.46704 3.11571C8.06621 3.22149 8.06756 3.7909 8.46889 3.89478L9.53955 4.17189ZM6.85443 2.33317C6.93497 2.33317 7.00026 2.39846 7.00026 2.479V3.354C7.00026 3.43455 6.93497 3.49984 6.85443 3.49984H2.10026V12.2498H10.5586C10.7197 12.2498 10.8503 12.1193 10.8503 11.9582V7.14567C10.8503 7.06513 10.9156 6.99984 10.9961 6.99984H11.8711C11.9516 6.99984 12.0169 7.06513 12.0169 7.14567V12.8332C12.0169 13.1553 11.7558 13.4165 11.4336 13.4165H1.51693C1.19476 13.4165 0.933594 13.1553 0.933594 12.8332V2.9165C0.933594 2.59434 1.19476 2.33317 1.51693 2.33317H6.85443ZM8.30344 6.27272L9.43036 6.57467L8.22254 11.0823L7.09562 10.7804L8.30344 6.27272ZM6.56676 6.89146L5.7418 6.0665L3.26693 8.54137L3.35968 8.63404L3.35235 8.64146L5.62099 10.9101L6.44595 10.0851L4.9093 8.54858L6.56676 6.89146Z" fill="url(#paint0_radial_370_13481)"></path><defs data-v-159ebe90=""><radialGradient data-v-159ebe90="" id="paint0_radial_370_13481" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12.8336 1.1665) rotate(134.17) scale(17.0784 23.5605)"><stop data-v-159ebe90="" stop-color="#FF8A01"></stop><stop data-v-159ebe90="" offset="0.223725" stop-color="#B051B9"></stop><stop data-v-159ebe90="" offset="0.455423" stop-color="#672BFF"></stop><stop data-v-159ebe90="" offset="0.9999" stop-color="#0066FF"></stop></radialGradient></defs></svg> <span data-v-159ebe90="" class="txt">代码解读</span></div><div class="code-block-extension-copyCodeBtn">复制代码</div></div></div><code class="hljs language-javascript code-block-extension-codeShowNum" lang="javascript"><span class="code-block-extension-codeLine" data-line-num="1"><span class="hljs-keyword">const</span> element = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">'box'</span>)</span>
+<span class="code-block-extension-codeLine" data-line-num="2"><span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">100</span>; i++) {</span>
+<span class="code-block-extension-codeLine" data-line-num="3">    element.<span class="hljs-property">style</span>.<span class="hljs-property">left</span> = <span class="hljs-string">`<span class="hljs-subst">${i}</span>px`</span>     <span class="hljs-comment">// 每次循环都会触发回流</span></span>
+<span class="code-block-extension-codeLine" data-line-num="4">    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(element.<span class="hljs-property">offsetHeight</span>)  <span class="hljs-comment">// 强制触发回流</span></span>
+<span class="code-block-extension-codeLine" data-line-num="5">}</span>
+</code></pre>
+                <p>这段代码先调用了改变元素几何属性的方法，随后调用了读取元素几何属性的方法。正常来说浏览器会将多个触发回流的操作合并为一次回流，但读取元素几何属性的操作，浏览器会强制触发回流以确保获取精准的位置信息，所以这段代码会触发
+                    100 次回流</p>
+                <blockquote>
+                    <p>我们需要避免频繁修改元素的几何属性后立马读取的操作</p>
+                </blockquote>
+                <h2 data-id="heading-4">对开发过程有什么指导意义</h2>
+                <h3 data-id="heading-5">css</h3>
+                <ul>
+                    <li>避免使用 <code>table</code> 布局，<code>table</code> 布局可能会触发多次回流，可以使用 <code>flex</code> 布局或者
+                        <code>grid</code> 布局代替</li>
+                    <li>对于复杂动画，可以使用 <code>position: fixed</code> 或者 <code>position: absolute</code> 来脱离文档流，避免频繁回流</li>
+                    <li>避免使用 <code>css</code> 表达式，<code>css</code> 表达式会在每次回流时重新计算（比如：<code>calc()</code>）</li>
+                    <li><code>css3</code> 硬件加速（GPU 加速）来减少回流和重绘，可以通过 <code>will-change</code> 属性或者
+                        <code>transform: translateZ(0)</code> 来开启硬件加速。这可以让
+                        <code>transform</code>、<code>opacity</code>、<code>filter</code> 属性不会触发回流和重绘</li>
+                </ul>
+                <p>常见的触发硬件加速的 <code>css</code> 属性：</p>
+                <ol>
+                    <li><code>transform</code></li>
+                    <li><code>opacity</code></li>
+                    <li><code>filters</code></li>
+                    <li><code>Will-change</code></li>
+                </ol>
+                <p>GPU
+                    擅长处理位图数据，而且是单独的一个合成线程，没有占用主线程的资源，即使主线程卡住了，效果依然能够流畅地展示。使用之后可以提升动画的性能，但是也会带来一些问题，比如：会消耗更多的内存，会导致更多的电量消耗，会导致更多的
+                    GPU 资源消耗，所以在使用硬件加速的时候需要权衡</p>
+                <h3 data-id="heading-6">JavaScript</h3>
+                <ul>
+                    <li>避免频繁使用 <code>style</code>，而是通过修改 <code>class</code> 来修改样式</li>
+                    <li>避免频繁操作 DOM，可以通过 <code>DocumentFragment</code> 来操作（使用 <code>DocumentFragment</code> 能解决直接操作 DOM
+                        引发大量回流的问题，因为所有的节点会被一次插入到文档中，而这个操作仅发生一个重渲染的操作）</li>
+                </ul>
+                <p>示例代码：</p>
+                <pre><div class="code-block-extension-header" style="background-color: rgb(39, 40, 34);"><div class="code-block-extension-headerLeft"><div class="code-block-extension-foldBtn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z" data-name="Down"></path></svg></div><span class="code-block-extension-lang">javascript</span></div><div class="code-block-extension-headerRight"><div data-v-159ebe90="" class="render"><svg data-v-159ebe90="" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" class="icon"><path data-v-159ebe90="" fill-rule="evenodd" clip-rule="evenodd" d="M9.53955 4.17189C9.68118 4.20855 9.79179 4.31915 9.82844 4.46078L10.1056 5.53143C10.2094 5.93276 10.7788 5.93412 10.8846 5.53329L11.1678 4.46028C11.2049 4.31949 11.3152 4.20973 11.4562 4.17324L12.5321 3.89478C12.9334 3.7909 12.9348 3.22149 12.5339 3.11571L11.4557 2.83116C11.3156 2.79418 11.2061 2.68474 11.1692 2.54461L10.8846 1.46639C10.7788 1.06556 10.2094 1.06691 10.1056 1.46824L9.82709 2.54413C9.7906 2.6851 9.68084 2.79538 9.54005 2.83254L8.46704 3.11571C8.06621 3.22149 8.06756 3.7909 8.46889 3.89478L9.53955 4.17189ZM6.85443 2.33317C6.93497 2.33317 7.00026 2.39846 7.00026 2.479V3.354C7.00026 3.43455 6.93497 3.49984 6.85443 3.49984H2.10026V12.2498H10.5586C10.7197 12.2498 10.8503 12.1193 10.8503 11.9582V7.14567C10.8503 7.06513 10.9156 6.99984 10.9961 6.99984H11.8711C11.9516 6.99984 12.0169 7.06513 12.0169 7.14567V12.8332C12.0169 13.1553 11.7558 13.4165 11.4336 13.4165H1.51693C1.19476 13.4165 0.933594 13.1553 0.933594 12.8332V2.9165C0.933594 2.59434 1.19476 2.33317 1.51693 2.33317H6.85443ZM8.30344 6.27272L9.43036 6.57467L8.22254 11.0823L7.09562 10.7804L8.30344 6.27272ZM6.56676 6.89146L5.7418 6.0665L3.26693 8.54137L3.35968 8.63404L3.35235 8.64146L5.62099 10.9101L6.44595 10.0851L4.9093 8.54858L6.56676 6.89146Z" fill="url(#paint0_radial_370_13481)"></path><defs data-v-159ebe90=""><radialGradient data-v-159ebe90="" id="paint0_radial_370_13481" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12.8336 1.1665) rotate(134.17) scale(17.0784 23.5605)"><stop data-v-159ebe90="" stop-color="#FF8A01"></stop><stop data-v-159ebe90="" offset="0.223725" stop-color="#B051B9"></stop><stop data-v-159ebe90="" offset="0.455423" stop-color="#672BFF"></stop><stop data-v-159ebe90="" offset="0.9999" stop-color="#0066FF"></stop></radialGradient></defs></svg> <span data-v-159ebe90="" class="txt">代码解读</span></div><div class="code-block-extension-copyCodeBtn">复制代码</div></div></div><code class="hljs language-javascript code-block-extension-codeShowNum" lang="javascript"><span class="code-block-extension-codeLine" data-line-num="1"><span class="hljs-comment">// 一般操作</span></span>
+<span class="code-block-extension-codeLine" data-line-num="2"><span class="hljs-keyword">let</span> app = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">querySelector</span>(<span class="hljs-string">'.app'</span>)</span>
+<span class="code-block-extension-codeLine" data-line-num="3">  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>;i&lt;<span class="hljs-number">5</span>;i++){</span>
+<span class="code-block-extension-codeLine" data-line-num="4">     <span class="hljs-keyword">let</span> div = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">createElement</span>(<span class="hljs-string">'li'</span>)</span>
+<span class="code-block-extension-codeLine" data-line-num="5">     div.<span class="hljs-title function_">setAttribute</span>(<span class="hljs-string">'class'</span>,<span class="hljs-string">'item'</span>)</span>
+<span class="code-block-extension-codeLine" data-line-num="6">     div.<span class="hljs-property">innerText</span> = <span class="hljs-number">6666</span></span>
+<span class="code-block-extension-codeLine" data-line-num="7">     app.<span class="hljs-title function_">appendChild</span>(div)</span>
+<span class="code-block-extension-codeLine" data-line-num="8">  }</span>
+<span class="code-block-extension-codeLine" data-line-num="9"></span>
+<span class="code-block-extension-codeLine" data-line-num="10"><span class="hljs-comment">// 使用 DocumentFragment</span></span>
+<span class="code-block-extension-codeLine" data-line-num="11"><span class="hljs-keyword">let</span> app = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">querySelector</span>(<span class="hljs-string">'.app'</span>)</span>
+<span class="code-block-extension-codeLine" data-line-num="12"><span class="hljs-keyword">let</span> fragement = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">createDocumentFragment</span>()</span>
+<span class="code-block-extension-codeLine" data-line-num="13">  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>;i&lt;<span class="hljs-number">5</span>;i++){</span>
+<span class="code-block-extension-codeLine" data-line-num="14">     <span class="hljs-keyword">let</span> div = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">createElement</span>(<span class="hljs-string">'li'</span>)</span>
+<span class="code-block-extension-codeLine" data-line-num="15">     div.<span class="hljs-title function_">setAttribute</span>(<span class="hljs-string">'class'</span>,<span class="hljs-string">'item'</span>)</span>
+<span class="code-block-extension-codeLine" data-line-num="16">     div.<span class="hljs-property">innerText</span> = <span class="hljs-number">6666</span></span>
+<span class="code-block-extension-codeLine" data-line-num="17">     fragement.<span class="hljs-title function_">appendChild</span>(div)</span>
+<span class="code-block-extension-codeLine" data-line-num="18">  }</span>
+<span class="code-block-extension-codeLine" data-line-num="19">app.<span class="hljs-title function_">appendChild</span>(fragement)</span>
+</code></pre>
+                <p><code>DocumentFragment</code> 节点不属于文档树，存在于内存中，并不在 DOM 中，将子元素插入到文档片段中时不会引起页面回流，因此使用
+                    <code>DocumentFragment</code> 可以起到性能优化的作用</p>
+                <p>但现代浏览器会使用队列来储存多次修改，进行优化，就这个优化方式，效果并不是很明显，不用优先考虑</p>
+                <ul>
+                    <li>
+                        <p>可以先为元素设置 <code>display: none</code>，操作结束后再把它显示出来。因为在 <code>display</code> 属性为
+                            <code>none</code> 的元素上进行的 DOM 操作不会引发回流和重绘</p>
+                    </li>
+                    <li>
+                        <p>避免频繁读取元素的几何属性，可以通过一次性读取多个属性，或者使用 <code>getBoundingClientRect()</code> 方法来获取元素的位置信息</p>
+                    </li>
+                    <li>
+                        <p>避免布局抖动，布局抖动是指在一次事件循环中多次读取和写入元素的几何属性</p>
+                    </li>
+                </ul>
+                <h2 data-id="heading-7">总结</h2>
+                <p>大部分优化操作在我们日常开发中都不会太过注意，性能问题在还没遇到的时候不用过多考虑</p>
+                <p>需要避免的一个明显的一个影响性能的操作是：</p>
+                <ul>
+                    <li>避免频繁修改元素的几何属性后立马读取的操作</li>
+                </ul>
+            </div>
+        </div>
+
     </div>
     <script type="text/javascript" src="../dist/html2pdf.js"></script>
     <script type="text/javascript" src="./SourceHanSansSC-Normal-Min-normal.js"></script>
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> -->
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> -->
     <script type="text/javascript">
-     
+
         // const canvas = document.getElementById('myCanvas');
         // const ctx = canvas.getContext('2d');
 
@@ -193,25 +626,27 @@
         // // 绘制圆角矩形边框
         // drawRoundedRect(50, 50, 100, 100, 20);
         // ctx.stroke();
-       
+
 
 
 
         // 等待字体加载并执行转换
         async function convertToPDF() {
             // console.log(window.fontBase64,'window.fontBase64')
-            html2pdf(document.getElementsByClassName('.content'), {
+            // document.getElementById('content').style.display = 'none';
+            html2pdf(document.body, {
                 useCORS: true,
                 scale: 1,
-                fontConfig:{
+                fontConfig: {
                     fontFamily: 'SourceHanSansSC-Normal-Min',
                     fontBase64: window.fontBase64,
-                    fontUrl:'',
-                    fontWeight:400,
-                    fontStyle:'normal'
+                    fontUrl: '',
+                    fontWeight: 400,
+                    fontStyle: 'normal'
                 },
+                pdfFileName: 'my-document.pdf'  // 指定 PDF 文件名
             }).then(function (canvas) {
-                console.log(window.fontBase64, 'window.fontBase64');
+                // console.log(window.fontBase64, 'window.fontBase64');
                 document.body.appendChild(canvas);
             });
         }
@@ -222,7 +657,7 @@
         // html2pdf()
         //     .from(element)
         //     .save('output.pdf');
-        // const { jsPDF } = window.jspdf;
+
         // var doc = new jsPDF();
 
         // doc.html(document.querySelector('.content'), {

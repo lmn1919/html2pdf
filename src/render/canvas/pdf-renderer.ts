@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf"; // 用于生成PDF文档
 
-import "../../SourceHanSansSC-Normal-Min-normal"; // 导入阿里巴巴普惠体字体
+// import "../../SourceHanSansSC-Normal-Min-normal"; // 导入思源黑体
+// import "../../SourceHanSansCN-Medium-normal"; // 导入阿里巴巴普惠体字体
 import { contains } from '../../core/bitwise'; // 位运算工具函数
 import { Context } from '../../core/context'; // 上下文对象
 import { CSSParsedDeclaration } from '../../css'; // CSS解析声明
@@ -71,7 +72,7 @@ export interface RenderOptions {
     y: number; // y坐标  
     width: number; // 宽度
     height: number; // 高度
-   
+    pdfFileName?: string; // 新增 PDF 文件名选项
 }
 
 // 遮罩偏移常量
@@ -88,12 +89,14 @@ export class CanvasRenderer extends Renderer {
 
     // 构造函数
     constructor(context: Context, options: RenderConfigurations) {
+        console.log('options参数',options,context)
         super(context, options);
         this.canvas = options.canvas ? options.canvas : document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
 
         // 计算页面尺寸并转换为 pt 单位 (1pt = 1/72 inch, 1px = 1/96 inch)
-        const pxToPt = (px: number) => px * (72 / 96);
+        const pxToPt = (px: number) => px * 1;
+        // (72 / 96)
         const pageWidth = pxToPt(options.width);
         const pageHeight = pxToPt(options.height);
 
@@ -101,20 +104,22 @@ export class CanvasRenderer extends Renderer {
         this.jspdfCtx = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
             unit: 'pt',
-            format: [pageWidth, pageHeight],
+            format: [pageWidth+100, pageHeight],
             hotfixes: ["px_scaling"]
         });
-        this.jspdfCtx.setFont('SourceHanSansSC-Normal-Min');
+
         // 确保字体已加载并注册到 jsPDF
-        // if (options.fontConfig) {
-        //     try {
-        //         this.loadFont();
-        //     } catch (error) {
-        //         console.warn('Failed to set font:', error);
-        //         // 如果设置失败，使用默认字体
-        //         this.jspdfCtx.setFont('Helvetica');
-        //     }
-        // }
+        if (options.fontConfig) {
+            try {
+                this.loadFont();
+            } catch (error) {
+                console.warn('Failed to set font:', error);
+                // 如果设置失败，使用默认字体
+                this.jspdfCtx.setFont('Helvetica');
+            }
+        }
+
+        // this.jspdfCtx.setFont('SourceHanSansSC-Normal-Min');
 
         // 将 pxToPt 保存为实例属性，以便其他方法使用
         this.pxToPt = pxToPt;
@@ -145,33 +150,39 @@ export class CanvasRenderer extends Renderer {
             // 直接使用 Base64 编码
             fontData = this.options.fontConfig.fontBase64;
         } else if (this.options.fontConfig.fontUrl) {
-            // 从 URL 加载字体
             fontData = await this.loadFontFromURL(this.options.fontConfig.fontUrl);
-        } else {
-            throw new Error('未提供有效的字体文件 Base64 编码或 URL');
         }
-
+        // console.log('fontData',fontData)
         // 将字体添加到 jsPDF
         this.addFontToJsPDF(fontData as string);
     }
 
-    async loadFontFromURL(url:string) {
+    async loadFontFromURL(url: string) {
         // 使用 fetch 加载远程字体文件
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('字体文件加载失败');
-        }
+        const response = await fetch(url, {
+            mode: 'no-cors', // 强制绕过 CORS
+            headers: {
+                'Content-Type': 'font/ttf'
+            }
+        });
+
         const blob = await response.blob();
+        const fontUrl = URL.createObjectURL(blob);
+        // console.log('response', blob, fontUrl)
+
+        // 注意：no-cors 模式下无法读取响应内容！
+        // const blob = await response.blob();
         return new Promise((resolve, reject) => {
-            const reader:any = new FileReader();
+            const reader: any = new FileReader();
             reader.onload = () => resolve(reader.result.split(',')[1]); // 提取 Base64 数据
             reader.onerror = () => reject(new Error('字体文件读取失败'));
             reader.readAsDataURL(blob);
         });
     }
 
-    addFontToJsPDF(fontData:string) {
-        const { fontFamily,fontWeight,fontStyle } = this.options.fontConfig;
+
+    addFontToJsPDF(fontData: string) {
+        const { fontFamily, fontWeight, fontStyle } = this.options.fontConfig;
         this.jspdfCtx.addFileToVFS(`${fontFamily}.ttf`, fontData); // 将字体添加到虚拟文件系统
         this.jspdfCtx.addFont(`${fontFamily}.ttf`, fontFamily, fontStyle, fontWeight); // 注册字体
         this.jspdfCtx.setFont(fontFamily); // 设置当前字体
@@ -232,6 +243,8 @@ export class CanvasRenderer extends Renderer {
         const styles = stack.element.container.styles;
         if (styles.isVisible()) {
             await this.renderStackContent(stack);
+        } else {
+            console.log('不渲染',styles.isVisible())
         }
     }
 
@@ -258,7 +271,7 @@ export class CanvasRenderer extends Renderer {
             // 转换坐标为 pt 单位
             const leftPt = this.pxToPt(text.bounds.left + extraPadding);
             const topPt = this.pxToPt(text.bounds.top + baseline + extraPaddingPt);
-            // console.log('leftPt',leftPt,text.text)
+            console.log('绘制文字',leftPt,text.bounds.left + extraPadding,topPt,text.bounds.top + baseline + extraPaddingPt,text.text)
 
             // 设置PDF文字颜色
 
@@ -303,9 +316,9 @@ export class CanvasRenderer extends Renderer {
         this.ctx.font = font;
 
         // 确保字体设置正确
-        if (this.options.fontConfig.fontFamily) {
-            this.jspdfCtx.setFont(this.options.fontConfig.fontFamily);
-        }
+        // if (this.options.fontConfig.fontFamily) {
+        //     this.jspdfCtx.setFont(this.options.fontConfig.fontFamily);
+        // }
 
         const fontSizePt = this.pxToPt(styles.fontSize.number);
         this.jspdfCtx.setFontSize(fontSizePt);
@@ -338,21 +351,23 @@ export class CanvasRenderer extends Renderer {
                         // console.log('PAINT_ORDER_LAYER.FILL',paintOrderLayer,PAINT_ORDER_LAYER.FILL)
                         // console.log('text.text颜色',styles.color,asString(styles.color))
                         this.ctx.fillStyle = asString(styles.color);
-                        this.jspdfCtx.setTextColor(asString(styles.color)); // 设置为黑色
+                       
                         this.renderTextWithLetterSpacing(text, styles.letterSpacing, baseline);
                         const textShadows: TextShadow = styles.textShadow;
-
+                        this.jspdfCtx.setTextColor(asString(styles.color)); // 设置为黑色
                         if (textShadows.length && text.text.trim().length) {
                             textShadows
                                 .slice(0)
                                 .reverse()
                                 .forEach((textShadow) => {
+                                  
                                     this.ctx.shadowColor = asString(textShadow.color);
                                     this.ctx.shadowOffsetX = textShadow.offsetX.number * this.options.scale;
                                     this.ctx.shadowOffsetY = textShadow.offsetY.number;
                                     this.ctx.shadowBlur = textShadow.blur.number;
 
                                     this.renderTextWithLetterSpacing(text, styles.letterSpacing, baseline);
+                                    this.jspdfCtx.setTextColor(asString(textShadow.color)); // 设置为黑色
                                 });
 
                             this.ctx.shadowColor = '';
@@ -461,7 +476,7 @@ export class CanvasRenderer extends Renderer {
             };
 
 
-            console.log('绘制图片', image)
+            // console.log('绘制图片', image)
 
             // 如果是HTMLImageElement,则直接添加图片
             if (image instanceof HTMLImageElement) {
@@ -743,10 +758,14 @@ export class CanvasRenderer extends Renderer {
             await this.renderStack(child);
         }
 
+        // 检查是否是根堆叠上下文
+        // 检查是否是根堆叠上下文
 
-        // 生成PDF文件
-        this.jspdfCtx.save("a4.pdf");
-
+        // console.log('stack',stack)
+        // if (stack.hasOwnProperty('parent') && !stack.parent) {
+        //     // 如果是根堆叠上下文,说明所有内容都渲染完成,可以保存PDF
+        //     this.jspdfCtx.save("a4.pdf");
+        // }
     }
 
     // 创建遮罩
@@ -1007,13 +1026,13 @@ export class CanvasRenderer extends Renderer {
 
                 // 在PDF中渲染背景色
                 this.jspdfCtx.setFillColor(asString(styles.backgroundColor));
-                this.jspdfCtx.rect(
-                    x,           // x 坐标
-                    y,           // y 坐标
-                    width,      // 宽度
-                    height,     // 高度
-                    'F'         // 填充模式
-                );
+                // this.jspdfCtx.rect(
+                //     x,           // x 坐标
+                //     y,           // y 坐标
+                //     width,      // 宽度
+                //     height,     // 高度
+                //     'F'         // 填充模式
+                // );
             }
 
             // 渲染背景图片
@@ -1087,40 +1106,40 @@ export class CanvasRenderer extends Renderer {
                 const endPoint = borderBoxArea[2] as Vector;
 
                 // 根据边的位置(上右下左)绘制不同的边框线
-                switch (side) {
-                    case 0: // 上边框
-                        this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x),
-                            this.pxToPt(startPoint.y),
-                            this.pxToPt(endPoint.x),
-                            this.pxToPt(startPoint.y)
-                        );
-                        break;
-                    case 1: // 右边框
-                        this.jspdfCtx.line(
-                            this.pxToPt(endPoint.x),
-                            this.pxToPt(startPoint.y),
-                            this.pxToPt(endPoint.x),
-                            this.pxToPt(endPoint.y)
-                        );
-                        break;
-                    case 2: // 下边框
-                        this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x),
-                            this.pxToPt(endPoint.y),
-                            this.pxToPt(endPoint.x),
-                            this.pxToPt(endPoint.y)
-                        );
-                        break;
-                    case 3: // 左边框
-                        this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x),
-                            this.pxToPt(startPoint.y),
-                            this.pxToPt(startPoint.x),
-                            this.pxToPt(endPoint.y)
-                        );
-                        break;
-                }
+                // switch (side) {
+                //     case 0: // 上边框
+                //         this.jspdfCtx.line(
+                //             this.pxToPt(startPoint.x),
+                //             this.pxToPt(startPoint.y),
+                //             this.pxToPt(endPoint.x),
+                //             this.pxToPt(startPoint.y)
+                //         );
+                //         break;
+                //     case 1: // 右边框
+                //         this.jspdfCtx.line(
+                //             this.pxToPt(endPoint.x),
+                //             this.pxToPt(startPoint.y),
+                //             this.pxToPt(endPoint.x),
+                //             this.pxToPt(endPoint.y)
+                //         );
+                //         break;
+                //     case 2: // 下边框
+                //         this.jspdfCtx.line(
+                //             this.pxToPt(startPoint.x),
+                //             this.pxToPt(endPoint.y),
+                //             this.pxToPt(endPoint.x),
+                //             this.pxToPt(endPoint.y)
+                //         );
+                //         break;
+                //     case 3: // 左边框
+                //         this.jspdfCtx.line(
+                //             this.pxToPt(startPoint.x),
+                //             this.pxToPt(startPoint.y),
+                //             this.pxToPt(startPoint.x),
+                //             this.pxToPt(endPoint.y)
+                //         );
+                //         break;
+                // }
             }
             side++;
         }
@@ -1273,6 +1292,11 @@ export class CanvasRenderer extends Renderer {
 
         await this.renderStack(stack);
         this.applyEffects([]);
+        
+        // 使用配置的文件名或默认名称
+        const fileName = this.options.pdfFileName || 'output.pdf';
+        this.jspdfCtx.save(fileName);
+        
         return this.canvas;
     }
 }
