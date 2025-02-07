@@ -75,9 +75,35 @@
             margin-left: 10px;
             cursor: pointer;
         }
-        .article-title{
+        /* .article-title{
             background-color: #f00;
+        } */
+
+        .author-info-box{
+            display: flex;
+            align-items: center;
         }
+        .author-info-box, .first-column, .meta-box{
+          display: flex;
+          align-items: center;
+       
+        }
+        .first-column, .meta-box{
+         color: #8A919F;
+        }
+        .margin-right-10{
+            margin-right: 20px;
+        }
+        .author-name{
+            text-decoration: none;
+        }
+        .article-title{
+            background: #f00;
+            border: 1px solid #000;
+        }
+        /* .article-area{
+            padding: 10px;
+        } */
     </style>
 </head>
 
@@ -85,7 +111,7 @@
 
     <div class="main-area article-area" id="article-area" data-v-cd15ceae="" data-v-7cdd11fb="">
         <article itemscope="itemscope" itemtype="http://schema.org/Article" data-entry-id="7426319406358511651"
-            data-draft-id="7426410879707332660" data-original-type="0" class="article" data-v-7cdd11fb=""
+            data-draft-id="7426410879707332660" data-original-type="0" class="article" id="article-root" data-v-7cdd11fb=""
             data-v-cd15ceae=""><!---->
             <meta itemprop="headline" content="前端大佬都在用的usePagination究竟有多强？">
             <meta itemprop="keywords" content="前端,JavaScript,axios">
@@ -111,14 +137,14 @@
             </h1>
             <div class="author-info-block" data-v-7cdd11fb="">
                 <div class="author-info-box" data-v-7cdd11fb="">
-                    <div class="author-name" data-v-7cdd11fb=""><a href="/user/2747001266254456/posts" target="_blank"
+                    <div class="author-name margin-right-10" data-v-7cdd11fb=""><a href="/user/2747001266254456/posts" target="_blank"
                             rel="" class="jj-link username username ellipsis" data-v-65b50b51="" data-v-1800aadb=""
                             data-v-7cdd11fb=""><span class="name" style="max-width:160px;" data-v-65b50b51=""
                                 data-v-1800aadb="">
                                 坡道口
                             </span> <!----> <!----> <!----> </a></div>
-                    <div class="meta-box" data-v-7cdd11fb=""><time datetime="2024-10-17T11:05:48.000Z"
-                            title="Thu Oct 17 2024 19:05:48 GMT+0800 (中国标准时间)" class="time" data-v-7cdd11fb="">
+                    <div class="meta-box margin-right-10" data-v-7cdd11fb=""><time datetime="2024-10-17T11:05:48.000Z"
+                            title="Thu Oct 17 2024 19:05:48 GMT+0800 (中国标准时间)" class="time margin-right-10" data-v-7cdd11fb="">
                             2024-10-17
                         </time> <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
                             xmlns="http://www.w3.org/2000/svg" class="read-icon" data-v-7cdd11fb="">
@@ -126,9 +152,9 @@
                                 d="M7.90078 2.80078C4.49278 2.80078 1.74745 6.11672 0.800781 7.77469C1.74745 9.58339 4.49278 13.2008 7.90078 13.2008C11.3088 13.2008 14.0541 9.58339 15.0008 7.77469C14.0541 6.11672 11.3088 2.80078 7.90078 2.80078Z"
                                 stroke="currentColor" data-v-7cdd11fb=""></path>
                             <circle cx="7.89922" cy="8.00078" r="2.2" stroke="currentColor" data-v-7cdd11fb=""></circle>
-                        </svg> <span class="views-count" data-v-7cdd11fb="">
+                        </svg> <span class="views-count margin-right-10" data-v-7cdd11fb="">
                             12,133
-                        </span> <span class="read-time" data-v-7cdd11fb=""><svg width="16" height="16"
+                        </span> <span class="read-time margin-right-10" data-v-7cdd11fb=""><svg width="16" height="16"
                                 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" data-v-7cdd11fb=""
                                 class="">
                                 <rect width="16" height="16" fill="none" data-v-7cdd11fb=""></rect>
@@ -160,8 +186,7 @@
                         </div>
                     </div>
                 </div>
-                <div style="flex:1;" data-v-7cdd11fb=""></div> <!----> <button data-v-090b3d46="" data-v-7cdd11fb=""
-                    class="jj-follow-button follow"><span data-v-090b3d46="" class="text">关注</span></button>
+                <div style="flex:1;" data-v-7cdd11fb=""></div> 
             </div> <!----> <!----> <!---->
             <div id="article-root" itemprop="articleBody" class="main" data-v-7cdd11fb="">
                 <div class="article-viewer markdown-body cache result">
@@ -475,12 +500,7 @@
                             font-weight: 700
                         }
                     </style>
-<<<<<<< HEAD
-                    <p>大家好，今天我要给大家介绍一个让我惊喜连连的工具 -
-                        usePagination。作为一名前端开发者，我深知处理分页功能有多么繁琐。但自从遇到了usePagination，我的开发生活简直是天翻地覆啊！</p>
-=======
                     <p>大家好，今天我要给大家介绍一个让我惊喜连连的工具 - usePagination。作为一名前端开发者，我深知处理分页功能有多么繁琐。但自从遇到了usePagination，我的开发生活简直是天翻地覆啊！</p>
->>>>>>> 81e62e2c70e1af212ce3ae7ea5779ef2c98f8e11
                     <h2 data-id="heading-0">usePagination简介</h2>
                     <p><strong>usePagination是alovajs提供的一个分页请求策略</strong>，它可以帮我们轻松搞定分页相关的各种操作。说实话，我第一次用的时候真的被惊艳到了。它不仅能自动管理分页数据，还能预加载，大大提升了用户体验。
                     </p>

@@ -45,7 +45,7 @@ import { BoundCurves, calculateBorderBoxPath, calculateContentBoxPath, calculate
 import { contentBox } from '../box-sizing'; // 内容盒模型
 import { EffectTarget, IElementEffect, isClipEffect, isOpacityEffect, isTransformEffect } from '../effects'; // 效果相关
 import { FontMetrics } from '../font-metrics'; // 字体度量
-import { Path } from '../path'; // 路径变换
+import { Path, transformPath } from '../path'; // 路径变换
 import { Renderer } from '../renderer'; // 渲染器基类
 import { ElementPaint, parseStackingContexts, StackingContext } from '../stacking-context'; // 堆叠上下文
 import { Vector } from '../vector'; // 向量
@@ -76,8 +76,9 @@ export interface RenderOptions {
 }
 
 // 遮罩偏移常量
-// const MASK_OFFSET = 10000;
-
+const MASK_OFFSET = 10000;
+let leftMargin = 0
+let topMargin = 0
 // Canvas渲染器类,继承自Renderer
 export class CanvasRenderer extends Renderer {
     canvas: HTMLCanvasElement; // canvas元素
@@ -107,7 +108,7 @@ export class CanvasRenderer extends Renderer {
         this.jspdfCtx = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
             unit: 'pt',
-            format: [pageWidth+100, pageHeight],
+            format: [pageWidth, pageHeight],
             hotfixes: ["px_scaling"]
         });
 
@@ -263,6 +264,7 @@ export class CanvasRenderer extends Renderer {
 
         }
     }
+    
 
     // 渲染带有字母间距的文本
     renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, baseline: number): void {
@@ -270,17 +272,17 @@ export class CanvasRenderer extends Renderer {
             const extraPadding = text.text.startsWith('•') ? -15 : 0;
             const extraPaddingPt = text.text.startsWith('•') ? (text.bounds.height + 2) / 2 : 0;
             this.ctx.fillText(text.text, text.bounds.left + extraPadding, text.bounds.top + baseline);
-           
+            if(!leftMargin){
+                leftMargin = text.bounds.left + extraPadding
+            }
+            if(!topMargin){
+                topMargin = text.bounds.top + baseline + extraPaddingPt
+            }
             // 转换坐标为 pt 单位
-            const leftPt = this.pxToPt(text.bounds.left + extraPadding);
-            const topPt = this.pxToPt(text.bounds.top + baseline + extraPaddingPt);
-<<<<<<< HEAD
-
-            console.log('绘制文字',text.text,leftPt,text.bounds.left + extraPadding,extraPadding)
-            // console.log('绘制文字',leftPt,text.text)
-=======
-            console.log('绘制文字',leftPt,text.bounds.left + extraPadding,topPt,text.bounds.top + baseline + extraPaddingPt,text.text)
->>>>>>> 81e62e2c70e1af212ce3ae7ea5779ef2c98f8e11
+            const leftPt = this.pxToPt(text.bounds.left + extraPadding-leftMargin);
+            const topPt = this.pxToPt(text.bounds.top + baseline + extraPaddingPt-topMargin);
+          
+            // console.log('绘制文字',extraPadding,leftPt,text.bounds.left + extraPadding,topPt,text.bounds.top + baseline + extraPaddingPt,text)
 
             // 设置PDF文字颜色
 
@@ -297,8 +299,8 @@ export class CanvasRenderer extends Renderer {
               
                 this.ctx.fillText(letter, left, text.bounds.top + baseline);
 
-                this.jspdfCtx.text(letter, this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
-                console.log('绘制文字2',left,text.bounds.top + baseline)
+                this.jspdfCtx.text(letter, this.pxToPt(left-leftMargin), this.pxToPt(text.bounds.top + baseline-topMargin));
+                // console.log('绘制文字2',left,text.bounds.top + baseline)
                 return this.pxToPt(left + this.ctx.measureText(letter).width);
             }, startX);
         }
@@ -480,8 +482,8 @@ export class CanvasRenderer extends Renderer {
             // 将图片绘制到PDF中
             // 计算图片在PDF中的位置和尺寸(转换为pt单位)
             const pdfBox = {
-                left: this.pxToPt(box.left),
-                top: this.pxToPt(box.top),
+                left: this.pxToPt(box.left-leftMargin),
+                top: this.pxToPt(box.top-topMargin),
                 width: this.pxToPt(box.width),
                 height: this.pxToPt(box.height)
             };
@@ -526,6 +528,7 @@ export class CanvasRenderer extends Renderer {
 
         // 渲染所有文本节点
         for (const child of container.textNodes) {
+            console.log('child渲染所有文本节点',child,styles)
             await this.renderTextNode(child, styles);
         }
 
@@ -876,8 +879,8 @@ export class CanvasRenderer extends Renderer {
                     this.renderRepeat(path, pattern, x, y);
 
                     // PDF 背景图片渲染
-                    const xPt = this.pxToPt(x);
-                    const yPt = this.pxToPt(y);
+                    const xPt = this.pxToPt(x-leftMargin);
+                    const yPt = this.pxToPt(y-topMargin);
                     const widthPt = this.pxToPt(width);
                     const heightPt = this.pxToPt(height);
                     this.jspdfCtx.addImage(
@@ -1028,151 +1031,193 @@ export class CanvasRenderer extends Renderer {
                 // 获取背景区域的坐标和尺寸
                 const startPoint = backgroundPaintingArea[0] as Vector;
                 const endPoint = backgroundPaintingArea[2] as Vector;
-                // console.log('backgroundPaintingArea', backgroundPaintingArea)
-                // 转换坐标为 pt 单位
-                const x = this.pxToPt(startPoint.x);
-                const y = this.pxToPt(startPoint.y);
-                const width = this.pxToPt(endPoint.x - startPoint.x);
-                const height = this.pxToPt(endPoint.y - startPoint.y);
-                console.log('绘制背景颜色', 'x', x, 'y', y, 'width', width, 'height', height)
+                
+                // 转换坐标为 pt 单位并确保为数字类型
+                const x = Number(this.pxToPt(startPoint.x-leftMargin));
+                const y = Number(this.pxToPt(startPoint.y-topMargin));
+                const width = Number(this.pxToPt(endPoint.x - startPoint.x));
+                const height = Number(this.pxToPt(endPoint.y - startPoint.y));
+
                 // 在PDF中渲染背景色
-<<<<<<< HEAD
-                const color = asString(styles.backgroundColor);
-                const [r, g, b] = color.match(/\d+/g) || [];
-                this.jspdfCtx.setFillColor(r, g, b);
-                // this.jspdfCtx.rect(
-                //     x,           // x 坐标
-                //     y,           // y 坐标
-                //     width,      // 宽度
-                //     height,     // 高度
-                //     'F'         // 填充模式
-                // );
-=======
                 this.jspdfCtx.setFillColor(asString(styles.backgroundColor));
-                try{
-                    console.log('绘制背景颜色成功', 'x', x, 'y', y, 'width', width, 'height', height)
-                    this.jspdfCtx.rect(
-                        x,           // x 坐标
-                        y,           // y 坐标
-                    width,      // 宽度
-                    height,     // 高度
-                        'F'         // 填充模式
-                    );
+                try {
+                    // 确保所有参数都是有效的数字
+                    if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
+                        console.log('背景shadow:', {x, y, width, height});
+                        this.jspdfCtx.rect(x, y, width, height, 'F');
+                    } else {
+                        console.warn('无效的矩形参数:', {x, y, width, height});
+                    }
                 } catch (e) {
-                    console.log('绘制背景颜色失败', 'x', x, 'y', y, 'width', width, 'height', height)
-                    console.error('绘制背景颜色失败', e)
+                    console.error('绘制背景颜色失败:', e);
                 }
->>>>>>> 81e62e2c70e1af212ce3ae7ea5779ef2c98f8e11
             }
 
             // 渲染背景图片
             await this.renderBackgroundImage(paint.container);
             this.ctx.restore();
 
-            // 处理阴影效果
-            styles.boxShadow.forEach(shadow => {
+
+            styles.boxShadow
+            .slice(0)
+            .reverse()
+            .forEach((shadow) => {
+                this.ctx.save();
                 const borderBoxArea = calculateBorderBoxPath(paint.curves);
-                const startPoint = borderBoxArea[0] as Vector;
-                const endPoint = borderBoxArea[2] as Vector;
-
-                // 转换阴影坐标和尺寸为 pt 单位
-                const x = this.pxToPt(startPoint.x + shadow.offsetX.number);
-                const y = this.pxToPt(startPoint.y + shadow.offsetY.number);
-                const width = this.pxToPt(endPoint.x - startPoint.x);
-                const height = this.pxToPt(endPoint.y - startPoint.y);
-
-                // 在PDF中渲染阴影
-                this.jspdfCtx.setFillColor(shadow.color);
-                this.jspdfCtx.rect(
-                    x,
-                    y,
-                    width,
-                    height,
-                    'F'
+                const maskOffset = shadow.inset ? 0 : MASK_OFFSET;
+                const shadowPaintingArea = transformPath(
+                    borderBoxArea,
+                    -maskOffset + (shadow.inset ? 1 : -1) * shadow.spread.number,
+                    (shadow.inset ? 1 : -1) * shadow.spread.number,
+                    shadow.spread.number * (shadow.inset ? -2 : 2),
+                    shadow.spread.number * (shadow.inset ? -2 : 2)
                 );
+
+                if (shadow.inset) {
+                    this.path(borderBoxArea);
+                    this.ctx.clip();
+                    this.mask(shadowPaintingArea);
+                } else {
+                    this.mask(borderBoxArea);
+                    this.ctx.clip();
+                    this.path(shadowPaintingArea);
+                }
+
+                this.ctx.shadowOffsetX = shadow.offsetX.number + maskOffset;
+                this.ctx.shadowOffsetY = shadow.offsetY.number;
+                this.ctx.shadowColor = asString(shadow.color);
+                this.ctx.shadowBlur = shadow.blur.number;
+                this.ctx.fillStyle = shadow.inset ? asString(shadow.color) : 'rgba(0,0,0,1)';
+
+                this.ctx.fill();
+                this.ctx.restore();
             });
+
+            // 处理阴影效果
+            // styles.boxShadow.forEach(shadow => {
+               
+            //     const borderBoxArea = calculateBorderBoxPath(paint.curves);
+               
+            //     const startPoint = borderBoxArea[0] as Vector;
+            //     const endPoint = borderBoxArea[2] as Vector;
+
+            //     // 转换阴影坐标和尺寸为 pt 单位
+            //     const x = this.pxToPt(startPoint.x + shadow.offsetX.number);
+            //     const y = this.pxToPt(startPoint.y + shadow.offsetY.number);
+            //     const width = this.pxToPt(endPoint.x - startPoint.x);
+            //     const height = this.pxToPt(endPoint.y - startPoint.y);
+            //     console.log('shadow', x,y,width,height,asString(shadow.color))
+            //     this.drawBoxWithGradientShadow(x,y,width,height,shadow.color)
+            //     // 在PDF中渲染阴影
+            //     // this.jspdfCtx.setFillColor(asString(shadow.color));
+            //     // this.jspdfCtx.rect(
+            //     //     x,
+            //     //     y,
+            //     //     width,
+            //     //     height,
+            //     //     'F'
+            //     // );
+            // });
         }
 
-        // 处理四个边框
+        // 修改边框渲染部分
         let side = 0;
         for (const border of borders) {
-
-            // 只处理有效的边框(有样式、颜色且宽度大于0)
             if (border.style !== BORDER_STYLE.NONE && !isTransparent(border.color) && border.width > 0) {
-                // 根据不同的边框样式进行Canvas渲染
-                if (border.style === BORDER_STYLE.DASHED) {
-                    await this.renderDashedDottedBorder(
-                        border.color,
-                        border.width,
-                        side,
-                        paint.curves,
-                        BORDER_STYLE.DASHED
-                    );
-                } else if (border.style === BORDER_STYLE.DOTTED) {
-                    await this.renderDashedDottedBorder(
-                        border.color,
-                        border.width,
-                        side,
-                        paint.curves,
-                        BORDER_STYLE.DOTTED
-                    );
-                } else if (border.style === BORDER_STYLE.DOUBLE) {
-                    await this.renderDoubleBorder(border.color, border.width, side, paint.curves);
-                } else {
-                    // console.log('renderSolidBorder实线', border.color, side, paint.curves)
-                    await this.renderSolidBorder(border.color, side, paint.curves);
-                }
-
-                // PDF边框渲染设置
-                const color = border.color;
-
-                // console.log('color', color, asString(color))
-                this.jspdfCtx.setDrawColor(asString(color));
+                this.jspdfCtx.setDrawColor(asString(border.color));
                 this.jspdfCtx.setLineWidth(this.pxToPt(border.width));
+                
+                // 设置线条连接样式
+                this.jspdfCtx.setLineJoin('miter');
+                this.jspdfCtx.setLineCap('square');
 
-                // 获取边框的起点和终点坐标
                 const borderBoxArea = calculateBorderBoxPath(paint.curves);
                 const startPoint = borderBoxArea[0] as Vector;
                 const endPoint = borderBoxArea[2] as Vector;
 
-                // 根据边的位置(上右下左)绘制不同的边框线
+                // 计算边框的实际位置（考虑边框宽度）
+                const offset = border.width / 2;
+                
                 switch (side) {
-                    case 0: // 上边框
+                    case 0: // top
                         this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x),
-                            this.pxToPt(startPoint.y),
-                            this.pxToPt(endPoint.x),
-                            this.pxToPt(startPoint.y)
+                            this.pxToPt(startPoint.x - offset-leftMargin),
+                            this.pxToPt(startPoint.y-topMargin),
+                            this.pxToPt(endPoint.x + offset-leftMargin),
+                            this.pxToPt(startPoint.y-topMargin)
                         );
                         break;
-                    case 1: // 右边框
+                    case 1: // right
                         this.jspdfCtx.line(
-                            this.pxToPt(endPoint.x),
-                            this.pxToPt(startPoint.y),
-                            this.pxToPt(endPoint.x),
-                            this.pxToPt(endPoint.y)
+                            this.pxToPt(endPoint.x-leftMargin),
+                            this.pxToPt(startPoint.y - offset-topMargin),
+                            this.pxToPt(endPoint.x-leftMargin),
+                            this.pxToPt(endPoint.y + offset-topMargin)
                         );
                         break;
-                    case 2: // 下边框
+                    case 2: // bottom
                         this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x),
-                            this.pxToPt(endPoint.y),
-                            this.pxToPt(endPoint.x),
-                            this.pxToPt(endPoint.y)
+                            this.pxToPt(startPoint.x - offset-leftMargin),
+                            this.pxToPt(endPoint.y-topMargin),
+                            this.pxToPt(endPoint.x + offset-leftMargin),
+                            this.pxToPt(endPoint.y-topMargin)
                         );
                         break;
-                    case 3: // 左边框
+                    case 3: // left
                         this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x),
-                            this.pxToPt(startPoint.y),
-                            this.pxToPt(startPoint.x),
-                            this.pxToPt(endPoint.y)
+                            this.pxToPt(startPoint.x-leftMargin),
+                            this.pxToPt(startPoint.y - offset-topMargin),
+                            this.pxToPt(startPoint.x-leftMargin),
+                            this.pxToPt(endPoint.y + offset-topMargin)
                         );
                         break;
                 }
+                this.jspdfCtx.stroke();
             }
             side++;
         }
+    }
+
+
+     drawBoxWithGradientShadow(x: number, y: number, width: number, height: number, color: Color) {
+        // 创建更细腻的阴影效果
+        const shadowSteps = 20; // 增加阴影层数
+        const shadowSpread = 6; // 调整阴影扩散
+        const maxOpacity = 0.12; // 降低最大不透明度
+        const blur = 2; // 添加模糊效果
+        
+        // 转换坐标为 pt
+        const xPt = this.pxToPt(x-leftMargin);
+        const yPt = this.pxToPt(y-topMargin);
+        const widthPt = this.pxToPt(width);
+        const heightPt = this.pxToPt(height);
+        
+        // 绘制阴影层
+        for(let i = 0; i < shadowSteps; i++) {
+            const opacity = maxOpacity * Math.pow(1 - i/shadowSteps, 1.5); // 使用指数衰减
+            this.jspdfCtx.setFillColor(asString(color));
+            this.jspdfCtx.setGState(new this.jspdfCtx.GState({opacity: opacity}));
+            
+            const spread = (i * shadowSpread) / shadowSteps;
+            const blurOffset = blur * (1 - i/shadowSteps);
+            
+            // 绘制多个略微偏移的矩形来模拟模糊效果
+            for(let j = 0; j < 4; j++) {
+                const offset = blurOffset * (j/3 - 0.5);
+                this.jspdfCtx.rect(
+                    xPt - spread + offset,
+                    yPt - spread + offset,
+                    widthPt + (spread * 2),
+                    heightPt + (spread * 2),
+                    'F'
+                );
+            }
+        }
+        
+        // 绘制主要内容
+        this.jspdfCtx.setFillColor(asString(color));
+        this.jspdfCtx.setGState(new this.jspdfCtx.GState({opacity: 1}));
+        this.jspdfCtx.rect(xPt, yPt, widthPt, heightPt, 'F');
     }
 
     // 这个方法用于渲染虚线和点线边框
