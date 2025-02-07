@@ -95,8 +95,8 @@ export class CanvasRenderer extends Renderer {
         this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
 
         // 计算页面尺寸并转换为 pt 单位 (1pt = 1/72 inch, 1px = 1/96 inch)
-        const pxToPt = (px: number) => px * 1;
-        // (72 / 96)
+        const pxToPt = (px: number) => px *(72 / 96);
+        // 
         const pageWidth = pxToPt(options.width);
         const pageHeight = pxToPt(options.height);
 
@@ -1023,16 +1023,22 @@ export class CanvasRenderer extends Renderer {
                 const y = this.pxToPt(startPoint.y);
                 const width = this.pxToPt(endPoint.x - startPoint.x);
                 const height = this.pxToPt(endPoint.y - startPoint.y);
-
+                console.log('绘制背景颜色', 'x', x, 'y', y, 'width', width, 'height', height)
                 // 在PDF中渲染背景色
                 this.jspdfCtx.setFillColor(asString(styles.backgroundColor));
-                // this.jspdfCtx.rect(
-                //     x,           // x 坐标
-                //     y,           // y 坐标
-                //     width,      // 宽度
-                //     height,     // 高度
-                //     'F'         // 填充模式
-                // );
+                try{
+                    console.log('绘制背景颜色成功', 'x', x, 'y', y, 'width', width, 'height', height)
+                    this.jspdfCtx.rect(
+                        x,           // x 坐标
+                        y,           // y 坐标
+                    width,      // 宽度
+                    height,     // 高度
+                        'F'         // 填充模式
+                    );
+                } catch (e) {
+                    console.log('绘制背景颜色失败', 'x', x, 'y', y, 'width', width, 'height', height)
+                    console.error('绘制背景颜色失败', e)
+                }
             }
 
             // 渲染背景图片
@@ -1106,40 +1112,40 @@ export class CanvasRenderer extends Renderer {
                 const endPoint = borderBoxArea[2] as Vector;
 
                 // 根据边的位置(上右下左)绘制不同的边框线
-                // switch (side) {
-                //     case 0: // 上边框
-                //         this.jspdfCtx.line(
-                //             this.pxToPt(startPoint.x),
-                //             this.pxToPt(startPoint.y),
-                //             this.pxToPt(endPoint.x),
-                //             this.pxToPt(startPoint.y)
-                //         );
-                //         break;
-                //     case 1: // 右边框
-                //         this.jspdfCtx.line(
-                //             this.pxToPt(endPoint.x),
-                //             this.pxToPt(startPoint.y),
-                //             this.pxToPt(endPoint.x),
-                //             this.pxToPt(endPoint.y)
-                //         );
-                //         break;
-                //     case 2: // 下边框
-                //         this.jspdfCtx.line(
-                //             this.pxToPt(startPoint.x),
-                //             this.pxToPt(endPoint.y),
-                //             this.pxToPt(endPoint.x),
-                //             this.pxToPt(endPoint.y)
-                //         );
-                //         break;
-                //     case 3: // 左边框
-                //         this.jspdfCtx.line(
-                //             this.pxToPt(startPoint.x),
-                //             this.pxToPt(startPoint.y),
-                //             this.pxToPt(startPoint.x),
-                //             this.pxToPt(endPoint.y)
-                //         );
-                //         break;
-                // }
+                switch (side) {
+                    case 0: // 上边框
+                        this.jspdfCtx.line(
+                            this.pxToPt(startPoint.x),
+                            this.pxToPt(startPoint.y),
+                            this.pxToPt(endPoint.x),
+                            this.pxToPt(startPoint.y)
+                        );
+                        break;
+                    case 1: // 右边框
+                        this.jspdfCtx.line(
+                            this.pxToPt(endPoint.x),
+                            this.pxToPt(startPoint.y),
+                            this.pxToPt(endPoint.x),
+                            this.pxToPt(endPoint.y)
+                        );
+                        break;
+                    case 2: // 下边框
+                        this.jspdfCtx.line(
+                            this.pxToPt(startPoint.x),
+                            this.pxToPt(endPoint.y),
+                            this.pxToPt(endPoint.x),
+                            this.pxToPt(endPoint.y)
+                        );
+                        break;
+                    case 3: // 左边框
+                        this.jspdfCtx.line(
+                            this.pxToPt(startPoint.x),
+                            this.pxToPt(startPoint.y),
+                            this.pxToPt(startPoint.x),
+                            this.pxToPt(endPoint.y)
+                        );
+                        break;
+                }
             }
             side++;
         }

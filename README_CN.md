@@ -1,6 +1,6 @@
-# html2pdf.js
+# html2pdf
 
-html2pdf.js 使用 [html2canvas](https://github.com/niklasvh/html2canvas) 和 [jsPDF](https://github.com/MrRio/jsPDF) 在客户端将任何网页或元素转换为可打印的 PDF。
+html2pdf 纯前端将HTML转换为可编辑，非图片式的，可打印的PDF文件。
 
 > :warning: v0.10 版本中报告了一些问题。这些问题正在调查中,同时您可以考虑继续使用 v0.9.3 版本("^0.9.3" in npm, 或者[在 HTML script 标签中使用 cdnjs](https://cdnjs.com/libraries/html2pdf.js/0.9.3))。
 
