@@ -99,6 +99,9 @@ export class CanvasRenderer extends Renderer {
         const pageWidth = pxToPt(options.width);
         const pageHeight = pxToPt(options.height);
 
+        console.log('pageWidth',pageWidth)
+        console.log('pageHeight',pageHeight)
+
         // 初始化 jsPDF
         this.jspdfCtx = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
@@ -266,10 +269,12 @@ export class CanvasRenderer extends Renderer {
             const extraPadding = text.text.startsWith('•') ? -15 : 0;
             const extraPaddingPt = text.text.startsWith('•') ? (text.bounds.height + 2) / 2 : 0;
             this.ctx.fillText(text.text, text.bounds.left + extraPadding, text.bounds.top + baseline);
-
+           
             // 转换坐标为 pt 单位
             const leftPt = this.pxToPt(text.bounds.left + extraPadding);
             const topPt = this.pxToPt(text.bounds.top + baseline + extraPaddingPt);
+
+            console.log('绘制文字',text.text,leftPt,text.bounds.left + extraPadding,extraPadding)
             // console.log('绘制文字',leftPt,text.text)
 
             // 设置PDF文字颜色
@@ -284,9 +289,11 @@ export class CanvasRenderer extends Renderer {
             }
 
             letters.reduce((left, letter) => {
-                this.ctx.fillText(letter, this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
+              
+                this.ctx.fillText(letter, left, text.bounds.top + baseline);
 
                 this.jspdfCtx.text(letter, this.pxToPt(left), this.pxToPt(text.bounds.top + baseline));
+                console.log('绘制文字2',left,text.bounds.top + baseline)
                 return this.pxToPt(left + this.ctx.measureText(letter).width);
             }, startX);
         }
@@ -1024,7 +1031,9 @@ export class CanvasRenderer extends Renderer {
                 const height = this.pxToPt(endPoint.y - startPoint.y);
 
                 // 在PDF中渲染背景色
-                this.jspdfCtx.setFillColor(asString(styles.backgroundColor));
+                const color = asString(styles.backgroundColor);
+                const [r, g, b] = color.match(/\d+/g) || [];
+                this.jspdfCtx.setFillColor(r, g, b);
                 // this.jspdfCtx.rect(
                 //     x,           // x 坐标
                 //     y,           // y 坐标
