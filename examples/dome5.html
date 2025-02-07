@@ -45,7 +45,7 @@
             width: 40%;
         }
 
-        code.hljs {
+        .hljs {
             background: #2b2b2b;
             color: #f8f8f2;
         }
@@ -61,6 +61,17 @@
             color: #333;
             background: #f7f7f7;
         }
+
+        .code-block-extension-codeLine {
+            display: block;
+            padding: 0 12px;
+            margin: 0;
+            line-height: 1.5;
+            font-size: 14px;
+            color: #333;
+            background: #f7f7f7;
+        }
+
     </style>
 </head>
 
@@ -117,7 +128,7 @@
         </table>
 
 
-        <!-- <code class="hljs language-typescript code-block-extension-codeShowNum" lang="typescript"><span class="code-block-extension-codeLine" data-line-num="1"><span class="hljs-comment">// 灰度化算法：加权灰度化</span></span>
+        <div class="hljs language-typescript code-block-extension-codeShowNum" lang="typescript"><span class="code-block-extension-codeLine" data-line-num="1"><span class="hljs-comment">// 灰度化算法：加权灰度化</span></span>
       <span class="code-block-extension-codeLine" data-line-num="2"><span class="hljs-keyword">const</span> adaptiveGrayscale = (<span class="hljs-attr">imageData</span>: <span class="hljs-title class_">ImageData</span>): <span class="hljs-function"><span class="hljs-params">ImageData</span> =&gt;</span> {</span>
       <span class="code-block-extension-codeLine" data-line-num="3">    <span class="hljs-keyword">const</span> data = imageData.<span class="hljs-property">data</span>;</span>
       <span class="code-block-extension-codeLine" data-line-num="4">    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; data.<span class="hljs-property">length</span>; i += <span class="hljs-number">4</span>) {</span>
@@ -149,7 +160,7 @@
       <span class="code-block-extension-codeLine" data-line-num="30">    }</span>
       <span class="code-block-extension-codeLine" data-line-num="31">    <span class="hljs-keyword">return</span> imageData;</span>
       <span class="code-block-extension-codeLine" data-line-num="32">};</span>
-      </code> -->
+      </div>
         <!-- <div>
 
             <img class="img-center"
@@ -622,6 +633,7 @@
         // 等待字体加载并执行转换
         async function convertToPDF() {
             // console.log(window.fontBase64,'window.fontBase64')
+            // document.getElementById('content').style.display = 'none';
             html2pdf(document.body, {
                 useCORS: true,
                 scale: 1,
