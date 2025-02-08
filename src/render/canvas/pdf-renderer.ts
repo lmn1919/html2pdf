@@ -318,6 +318,24 @@ export class CanvasRenderer extends Renderer {
         ];
     }
 
+    // 添加一个新的颜色转换函数
+    private convertColor(color: Color): string {
+        // 如果是透明色，返回白色
+        if (isTransparent(color)) {
+            return '#FFFFFF';
+        }
+
+        // 将 rgba 转换为 rgb
+        // 从32位整数中提取RGB分量
+        const r = 0xff & (color >> 24);
+        const g = 0xff & (color >> 16); 
+        const b = 0xff & (color >> 8);
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+
+        // 其他颜色格式直接使用 asString
+        return asString(color);
+    }
+
     // 渲染文本节点
     async renderTextNode(text: TextContainer, styles: CSSParsedDeclaration): Promise<void> {
         const [font, fontFamily, fontSize] = this.createFontStyle(styles);
@@ -358,24 +376,24 @@ export class CanvasRenderer extends Renderer {
                     case PAINT_ORDER_LAYER.FILL:
                         // console.log('PAINT_ORDER_LAYER.FILL',paintOrderLayer,PAINT_ORDER_LAYER.FILL)
                         // console.log('text.text颜色',styles.color,asString(styles.color))
-                        this.ctx.fillStyle = asString(styles.color);
-
+                        this.ctx.fillStyle = this.convertColor(styles.color);
+                        this.jspdfCtx.setTextColor(this.convertColor(styles.color)); // 设置颜色
                         this.renderTextWithLetterSpacing(text, styles.letterSpacing, baseline);
                         const textShadows: TextShadow = styles.textShadow;
-                        this.jspdfCtx.setTextColor(asString(styles.color)); // 设置颜色
+                     
                         if (textShadows.length && text.text.trim().length) {
                             textShadows
                                 .slice(0)
                                 .reverse()
                                 .forEach((textShadow) => {
 
-                                    this.ctx.shadowColor = asString(textShadow.color);
+                                    this.ctx.shadowColor = this.convertColor(textShadow.color);
                                     this.ctx.shadowOffsetX = textShadow.offsetX.number * this.options.scale;
                                     this.ctx.shadowOffsetY = textShadow.offsetY.number;
                                     this.ctx.shadowBlur = textShadow.blur.number;
 
                                     this.renderTextWithLetterSpacing(text, styles.letterSpacing, baseline);
-                                    this.jspdfCtx.setTextColor(asString(textShadow.color)); // 设置颜色
+                                    this.jspdfCtx.setTextColor(this.convertColor(textShadow.color)); // 设置颜色
                                 });
 
                             this.ctx.shadowColor = '';
@@ -385,7 +403,7 @@ export class CanvasRenderer extends Renderer {
                         }
 
                         if (styles.textDecorationLine.length) {
-                            this.ctx.fillStyle = asString(styles.textDecorationColor || styles.color);
+                            this.ctx.fillStyle = this.convertColor(styles.textDecorationColor || styles.color);
                             styles.textDecorationLine.forEach((textDecorationLine) => {
                                 switch (textDecorationLine) {
                                     case TEXT_DECORATION_LINE.UNDERLINE:
@@ -424,7 +442,7 @@ export class CanvasRenderer extends Renderer {
                     case PAINT_ORDER_LAYER.STROKE:
                         // console.log('PAINT_ORDER_LAYER.STROKE',paintOrderLayer,PAINT_ORDER_LAYER.STROKE)
                         if (styles.webkitTextStrokeWidth && text.text.trim().length) {
-                            this.ctx.strokeStyle = asString(styles.webkitTextStrokeColor);
+                            this.ctx.strokeStyle = this.convertColor(styles.webkitTextStrokeColor);
                             this.ctx.lineWidth = styles.webkitTextStrokeWidth;
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             this.ctx.lineJoin = !!(window as any).chrome ? 'miter' : 'round';
@@ -489,34 +507,46 @@ export class CanvasRenderer extends Renderer {
 
             // 如果是HTMLImageElement,则直接添加图片
             if (image instanceof HTMLImageElement) {
-              
-                // this.jspdfCtx.addImage(
-                //     image,
-                //     'PNG',
-                //     pdfBox.left,
-                //     pdfBox.top,
-                //     pdfBox.width,
-                //     pdfBox.height
-                // );
+            
                 if (type == 'svg') {
-                    console.log('svgIMGSRC',type==='svg')
+                    // 创建一个更大分辨率的canvas以提高清晰度
                     const canvas = document.createElement('canvas');
-                    canvas.width = container.intrinsicWidth;
-                    canvas.height = container.intrinsicHeight;
+                    const scale = 2; // 增加2倍分辨率
+                    canvas.width = container.intrinsicWidth * scale;
+                    canvas.height = container.intrinsicHeight * scale;
                     const ctx = canvas.getContext('2d');
-                    ctx?.drawImage(image, 0, 0);
                     
-                    // 将Canvas转换为base64数据
-                    const imgData = canvas.toDataURL('image/png');
+                    if (ctx) {
+                        // 设置图像平滑
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        
+                        // 缩放绘制上下文以匹配更高的分辨率
+                        ctx.scale(scale, scale);
+                        
+                        // 绘制图片
+                        ctx.drawImage(image, 0, 0, container.intrinsicWidth, container.intrinsicHeight);
+                        
+                        // 设置图片颜色
+                        ctx.globalCompositeOperation = 'source-atop';
+                        ctx.fillStyle = this.convertColor(container.styles.color);
+                        ctx.fillRect(0, 0, container.intrinsicWidth, container.intrinsicHeight);
+                        ctx.globalCompositeOperation = 'source-over';
+                    }
                     
-                    // 添加到PDF
+                    // 使用更高质量的PNG编码
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    
+                    // 添加到PDF时保持原始尺寸
                     this.jspdfCtx.addImage(
                         imgData,
                         'PNG',
                         pdfBox.left,
                         pdfBox.top,
                         pdfBox.width,
-                        pdfBox.height
+                        pdfBox.height,
+                        undefined,
+                        'FAST'
                     );
                 }else{
                     this.jspdfCtx.addImage(
@@ -641,7 +671,7 @@ export class CanvasRenderer extends Renderer {
                         new Vector(container.bounds.left + size * 0.39363, container.bounds.top + size * 0.79)
                     ]);
 
-                    this.ctx.fillStyle = asString(INPUT_COLOR);
+                    this.ctx.fillStyle = this.convertColor(INPUT_COLOR);
                     this.ctx.fill();
                     this.ctx.restore();
                 }
@@ -659,7 +689,7 @@ export class CanvasRenderer extends Renderer {
                         Math.PI * 2,
                         true
                     );
-                    this.ctx.fillStyle = asString(INPUT_COLOR);
+                    this.ctx.fillStyle = this.convertColor(INPUT_COLOR);
                     this.ctx.fill();
                     this.ctx.restore();
                 }
@@ -672,7 +702,7 @@ export class CanvasRenderer extends Renderer {
             const { baseline } = this.fontMetrics.getMetrics(fontFamily, fontSize);
 
             this.ctx.font = fontFamily;
-            this.ctx.fillStyle = asString(styles.color);
+            this.ctx.fillStyle = this.convertColor(styles.color);
 
             this.ctx.textBaseline = 'alphabetic';
             this.ctx.textAlign = canvasTextAlign(container.styles.textAlign);
@@ -733,7 +763,7 @@ export class CanvasRenderer extends Renderer {
                 const [fontFamily] = this.createFontStyle(styles);
 
                 this.ctx.font = fontFamily;
-                this.ctx.fillStyle = asString(styles.color);
+                this.ctx.fillStyle = this.convertColor(styles.color);
 
                 this.ctx.textBaseline = 'middle';
                 this.ctx.textAlign = 'right';
@@ -941,7 +971,7 @@ export class CanvasRenderer extends Renderer {
                 const gradient = ctx.createLinearGradient(x0, y0, x1, y1);
 
                 processColorStops(backgroundImage.stops, lineLength).forEach((colorStop) =>
-                    gradient.addColorStop(colorStop.stop, asString(colorStop.color))
+                    gradient.addColorStop(colorStop.stop, this.convertColor(colorStop.color))
                 );
 
                 ctx.fillStyle = gradient;
@@ -965,7 +995,7 @@ export class CanvasRenderer extends Renderer {
                     const radialGradient = this.ctx.createRadialGradient(left + x, top + y, 0, left + x, top + y, rx);
 
                     processColorStops(backgroundImage.stops, rx * 2).forEach((colorStop) =>
-                        radialGradient.addColorStop(colorStop.stop, asString(colorStop.color))
+                        radialGradient.addColorStop(colorStop.stop, this.convertColor(colorStop.color))
                     );
 
                     this.path(path);
@@ -1008,7 +1038,7 @@ export class CanvasRenderer extends Renderer {
         // 解析边框路径
         this.path(parsePathForBorder(curvePoints, side));
         // 设置填充颜色
-        this.ctx.fillStyle = asString(color);
+        this.ctx.fillStyle = this.convertColor(color);
 
         // 填充路径
         this.ctx.fill();
@@ -1026,7 +1056,7 @@ export class CanvasRenderer extends Renderer {
 
         const outerPaths = parsePathForBorderDoubleOuter(curvePoints, side);
         this.path(outerPaths);
-        this.ctx.fillStyle = asString(color);
+        this.ctx.fillStyle = this.convertColor(color);
         this.ctx.fill();
         const innerPaths = parsePathForBorderDoubleInner(curvePoints, side);
         this.path(innerPaths);
@@ -1063,7 +1093,7 @@ export class CanvasRenderer extends Renderer {
 
             // 绘制背景色
             if (!isTransparent(styles.backgroundColor)) {
-                this.ctx.fillStyle = asString(styles.backgroundColor);
+                this.ctx.fillStyle = this.convertColor(styles.backgroundColor);
                 this.ctx.fill();
 
                 // 获取背景区域的坐标和尺寸
@@ -1077,7 +1107,7 @@ export class CanvasRenderer extends Renderer {
                 const height = Number(this.pxToPt(endPoint.y - startPoint.y));
 
                 // 在PDF中渲染背景色
-                this.jspdfCtx.setFillColor(asString(styles.backgroundColor));
+                this.jspdfCtx.setFillColor(this.convertColor(styles.backgroundColor));
                 try {
                     // 确保所有参数都是有效的数字
                     if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
@@ -1123,9 +1153,9 @@ export class CanvasRenderer extends Renderer {
 
                     this.ctx.shadowOffsetX = shadow.offsetX.number + maskOffset;
                     this.ctx.shadowOffsetY = shadow.offsetY.number;
-                    this.ctx.shadowColor = asString(shadow.color);
+                    this.ctx.shadowColor = this.convertColor(shadow.color);
                     this.ctx.shadowBlur = shadow.blur.number;
-                    this.ctx.fillStyle = shadow.inset ? asString(shadow.color) : 'rgba(0,0,0,1)';
+                    this.ctx.fillStyle = shadow.inset ? this.convertColor(shadow.color) : 'rgba(0,0,0,1)';
 
                     this.ctx.fill();
                     this.ctx.restore();
@@ -1162,55 +1192,81 @@ export class CanvasRenderer extends Renderer {
         let side = 0;
         for (const border of borders) {
             if (border.style !== BORDER_STYLE.NONE && !isTransparent(border.color) && border.width > 0) {
-                this.jspdfCtx.setDrawColor(asString(border.color));
+                this.jspdfCtx.setDrawColor(this.convertColor(border.color));
                 this.jspdfCtx.setLineWidth(this.pxToPt(border.width));
-
-                // 设置线条连接样式
-                this.jspdfCtx.setLineJoin('miter');
-                this.jspdfCtx.setLineCap('square');
-
+                
                 const borderBoxArea = calculateBorderBoxPath(paint.curves);
                 const startPoint = borderBoxArea[0] as Vector;
                 const endPoint = borderBoxArea[2] as Vector;
 
+                // 确保所有坐标都转换为 pt 单位
+                const x1 = this.pxToPt(startPoint.x-leftMargin);
+                const y1 = this.pxToPt(startPoint.y-topMargin);
+                const x2 = this.pxToPt(endPoint.x-leftMargin);
+                const y2 = this.pxToPt(endPoint.y-topMargin);
+                
                 // 计算边框的实际位置（考虑边框宽度）
-                const offset = border.width / 2;
-
-                switch (side) {
-                    case 0: // top
-                        this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x - offset - leftMargin),
-                            this.pxToPt(startPoint.y - topMargin),
-                            this.pxToPt(endPoint.x + offset - leftMargin),
-                            this.pxToPt(startPoint.y - topMargin)
-                        );
-                        break;
-                    case 1: // right
-                        this.jspdfCtx.line(
-                            this.pxToPt(endPoint.x - leftMargin),
-                            this.pxToPt(startPoint.y - offset - topMargin),
-                            this.pxToPt(endPoint.x - leftMargin),
-                            this.pxToPt(endPoint.y + offset - topMargin)
-                        );
-                        break;
-                    case 2: // bottom
-                        this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x - offset - leftMargin),
-                            this.pxToPt(endPoint.y - topMargin),
-                            this.pxToPt(endPoint.x + offset - leftMargin),
-                            this.pxToPt(endPoint.y - topMargin)
-                        );
-                        break;
-                    case 3: // left
-                        this.jspdfCtx.line(
-                            this.pxToPt(startPoint.x - leftMargin),
-                            this.pxToPt(startPoint.y - offset - topMargin),
-                            this.pxToPt(startPoint.x - leftMargin),
-                            this.pxToPt(endPoint.y + offset - topMargin)
-                        );
-                        break;
+                const offset = this.pxToPt(border.width / 2);
+                
+                try {
+                    switch (side) {
+                        case 0: // top
+                            this.jspdfCtx.line(
+                                x1 - offset,
+                                y1,
+                                x2 + offset,
+                                y1
+                            );
+                            break;
+                        case 1: // right
+                            this.jspdfCtx.line(
+                                x2,
+                                y1 - offset,
+                                x2,
+                                y2 + offset
+                            );
+                            break;
+                        case 2: // bottom
+                            this.jspdfCtx.line(
+                                x1 - offset,
+                                y2,
+                                x2 + offset,
+                                y2
+                            );
+                            break;
+                        case 3: // left
+                            this.jspdfCtx.line(
+                                x1,
+                                y1 - offset,
+                                x1,
+                                y2 + offset
+                            );
+                            break;
+                    }
+                    this.jspdfCtx.stroke();
+                } catch (error) {
+                    console.warn('Failed to draw border:', error);
+                    // 如果出错，尝试使用备用方法
+                    try {
+                        switch (side) {
+                            case 0: // top
+                                this.jspdfCtx.line(x1 - offset, y1, x2 + offset, y1);
+                                break;
+                            case 1: // right  
+                                this.jspdfCtx.line(x2, y1 - offset, x2, y2 + offset);
+                                break;
+                            case 2: // bottom
+                                this.jspdfCtx.line(x1 - offset, y2, x2 + offset, y2);
+                                break;
+                            case 3: // left
+                                this.jspdfCtx.line(x1, y1 - offset, x1, y2 + offset);
+                                break;
+                        }
+                        this.jspdfCtx.stroke();
+                    } catch (fallbackError) {
+                        console.error('Failed to draw border with fallback method:', fallbackError);
+                    }
                 }
-                this.jspdfCtx.stroke();
             }
             side++;
         }
@@ -1232,9 +1288,9 @@ export class CanvasRenderer extends Renderer {
 
         // 绘制阴影层
         for (let i = 0; i < shadowSteps; i++) {
-            const opacity = maxOpacity * Math.pow(1 - i / shadowSteps, 1.5); // 使用指数衰减
-            this.jspdfCtx.setFillColor(asString(color));
-            this.jspdfCtx.setGState(new this.jspdfCtx.GState({ opacity: opacity }));
+            const opacity = maxOpacity * Math.pow(1 - i / shadowSteps, 1.5);
+            this.jspdfCtx.setFillColor(this.convertColor(color));
+            this.jspdfCtx.setGState(new this.jspdfCtx.GState({opacity: opacity}));
 
             const spread = (i * shadowSpread) / shadowSteps;
             const blurOffset = blur * (1 - i / shadowSteps);
@@ -1253,8 +1309,8 @@ export class CanvasRenderer extends Renderer {
         }
 
         // 绘制主要内容
-        this.jspdfCtx.setFillColor(asString(color));
-        this.jspdfCtx.setGState(new this.jspdfCtx.GState({ opacity: 1 }));
+        this.jspdfCtx.setFillColor(this.convertColor(color));
+        this.jspdfCtx.setGState(new this.jspdfCtx.GState({opacity: 1}));
         this.jspdfCtx.rect(xPt, yPt, widthPt, heightPt, 'F');
     }
 
@@ -1308,7 +1364,7 @@ export class CanvasRenderer extends Renderer {
 
         // 开始绘制路径
         this.ctx.beginPath();
-        this.jspdfCtx.setDrawColor(color); // 设置PDF绘制颜色
+        this.jspdfCtx.setDrawColor(this.convertColor(color)); // 设置PDF绘制颜色
 
         if (style === BORDER_STYLE.DOTTED) {
             this.formatPath(strokePaths);
@@ -1363,7 +1419,7 @@ export class CanvasRenderer extends Renderer {
             this.ctx.lineWidth = width * 2 + 1.1;
             this.jspdfCtx.setLineWidth(width * 2 + 1.1);
         }
-        this.ctx.strokeStyle = asString(color);
+        this.ctx.strokeStyle = this.convertColor(color);
         this.ctx.stroke();
         this.jspdfCtx.stroke(); // PDF绘制线条
         this.ctx.setLineDash([]);
@@ -1374,11 +1430,19 @@ export class CanvasRenderer extends Renderer {
             if (isBezierCurve(boxPaths[0])) {
                 const path1 = boxPaths[3] as BezierCurve;
                 const path2 = boxPaths[0] as BezierCurve;
-                this.ctx.beginPath();
-                this.formatPath([new Vector(path1.end.x, path1.end.y), new Vector(path2.start.x, path2.start.y)]);
-                this.ctx.stroke();
-                this.jspdfCtx.lines([[path1.end.x, path1.end.y, path2.start.x, path2.start.y]], path1.end.x, path1.end.y); // PDF绘制连接线
-                this.jspdfCtx.stroke();
+                
+                // 确保所有坐标都转换为 pt 单位
+                const x1 = this.pxToPt(path1.end.x);
+                const y1 = this.pxToPt(path1.end.y);
+                const x2 = this.pxToPt(path2.start.x);
+                const y2 = this.pxToPt(path2.start.y);
+
+                try {
+                    this.jspdfCtx.line(x1, y1, x2, y2);
+                    this.jspdfCtx.stroke();
+                } catch (error) {
+                    console.warn('Failed to draw dashed border:', error);
+                }
             }
             if (isBezierCurve(boxPaths[1])) {
                 const path1 = boxPaths[1] as BezierCurve;
@@ -1397,7 +1461,7 @@ export class CanvasRenderer extends Renderer {
 
     async render(element: ElementContainer): Promise<HTMLCanvasElement> {
         if (this.options.backgroundColor) {
-            this.ctx.fillStyle = asString(this.options.backgroundColor);
+            this.ctx.fillStyle = this.convertColor(this.options.backgroundColor);
             this.ctx.fillRect(this.options.x, this.options.y, this.options.width, this.options.height);
         }
 
