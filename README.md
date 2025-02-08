@@ -38,7 +38,6 @@ html2pdf
 | iframe   | ❌        | 支持渲染iframe                                                                |
 | 阴影渲染 | ❌        | 暂不支持box-shadow、text-shadow                                               |
 | 渐变渲染 | ❌        | 暂不支持渐变背景                                                              |
-| <!--     | 动画渲染 | ❌                                                                             | 暂不支持动画效果 | --> |
 
 
 
