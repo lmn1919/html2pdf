@@ -462,119 +462,95 @@ export class CanvasRenderer extends Renderer {
     // 渲染替换元素(如图片、canvas等)
     // 渲染替换元素(如图片、canvas等)的方法
     renderReplacedElement(
-        container: ReplacedElementContainer, // 替换元素容器
-        curves: BoundCurves, // 边界曲线
-        image: HTMLImageElement | HTMLCanvasElement, // 图片或Canvas元素
-        type: 'image' | 'svg' | 'canvas' // 图片类型
+        container: ReplacedElementContainer,
+        curves: BoundCurves,
+        image: HTMLImageElement | HTMLCanvasElement,
+        type: 'image' | 'svg' | 'canvas'
     ): void {
-        // 检查图片是否存在且有有效的宽高
-        if (image && container.intrinsicWidth > 0 && container.intrinsicHeight > 0) {
-            // 获取内容盒子尺寸
-            const box = contentBox(container);
-            // 计算内边距盒子路径
-            const path = calculatePaddingBoxPath(curves);
-            // 设置路径
-            this.path(path);
-            // 保存当前绘图状态
-            this.ctx.save();
-            // 设置裁剪区域
-            this.ctx.clip();
-            // 在裁剪区域内绘制图片
-            this.ctx.drawImage(
-                image, // 源图片
-                0, // 源图片的x坐标
-                0, // 源图片的y坐标
-                container.intrinsicWidth, // 源图片的宽度
-                container.intrinsicHeight, // 源图片的高度
-                box.left, // 目标位置的x坐标
-                box.top, // 目标位置的y坐标
-                box.width, // 目标位置的宽度
-                box.height // 目标位置的高度
-            );
-            // 恢复之前保存的绘图状态
-            this.ctx.restore();
-            // 将图片绘制到PDF中
-            // 计算图片在PDF中的位置和尺寸(转换为pt单位)
-            const pdfBox = {
-                left: this.pxToPt(box.left - leftMargin),
-                top: this.pxToPt(box.top - topMargin),
-                width: this.pxToPt(box.width),
-                height: this.pxToPt(box.height)
-            };
+        if (!image || container.intrinsicWidth <= 0 || container.intrinsicHeight <= 0) {
+            return;
+        }
 
+        const box = contentBox(container);
+        const path = calculatePaddingBoxPath(curves);
+        this.path(path);
+        this.ctx.save();
+        this.ctx.clip();
 
-            // console.log('绘制图片', image)
+        // 计算图片在PDF中的位置和尺寸
+        const x = this.pxToPt(box.left - leftMargin);
+        const y = this.pxToPt(box.top - topMargin);
+        const width = this.pxToPt(box.width);
+        const height = this.pxToPt(box.height);
 
-            // 如果是HTMLImageElement,则直接添加图片
-            if (image instanceof HTMLImageElement) {
-            
-                if (type == 'svg') {
-                    // 创建一个更大分辨率的canvas以提高清晰度
-                    const canvas = document.createElement('canvas');
-                    const scale = 2; // 增加2倍分辨率
-                    canvas.width = container.intrinsicWidth * scale;
-                    canvas.height = container.intrinsicHeight * scale;
-                    const ctx = canvas.getContext('2d');
-                    
-                    if (ctx) {
-                        // 设置图像平滑
-                        ctx.imageSmoothingEnabled = true;
-                        ctx.imageSmoothingQuality = 'high';
-                        
-                        // 缩放绘制上下文以匹配更高的分辨率
-                        ctx.scale(scale, scale);
-                        
-                        // 绘制图片
-                        ctx.drawImage(image, 0, 0, container.intrinsicWidth, container.intrinsicHeight);
-                        
-                        // 设置图片颜色
-                        ctx.globalCompositeOperation = 'source-atop';
-                        ctx.fillStyle = this.convertColor(container.styles.color);
-                        ctx.fillRect(0, 0, container.intrinsicWidth, container.intrinsicHeight);
-                        ctx.globalCompositeOperation = 'source-over';
-                    }
-                    
-                    // 使用更高质量的PNG编码
-                    const imgData = canvas.toDataURL('image/png', 1.0);
-                    
-                    // 添加到PDF时保持原始尺寸
-                    this.jspdfCtx.addImage(
-                        imgData,
-                        'PNG',
-                        pdfBox.left,
-                        pdfBox.top,
-                        pdfBox.width,
-                        pdfBox.height,
-                        undefined,
-                        'FAST'
-                    );
-                }else{
-                    this.jspdfCtx.addImage(
-                        image,
-                        'PNG',
-                        pdfBox.left,
-                        pdfBox.top,
-                        pdfBox.width,
-                        pdfBox.height
-                    );
+        try {
+            // Canvas 处理
+            if (type === 'canvas') {
+                const canvas = image as HTMLCanvasElement;
+                const imageData = canvas.toDataURL('image/jpeg', 0.95);
+                try {
+                    this.jspdfCtx.addImage({
+                        imageData,
+                        format: 'JPEG',
+                        x,
+                        y,
+                        w: width,
+                        h: height
+                    });
+                } catch (error) {
+                    console.error('Failed to add canvas image:', error);
                 }
             }
-            // 如果是Canvas元素,则先转换为base64再添加
-            else if (image instanceof HTMLCanvasElement) {
-                const imgData = image.toDataURL('image/png');
-                this.jspdfCtx.addImage(
-                    imgData,
-                    'PNG',
-                    pdfBox.left,
-                    pdfBox.top,
-                    pdfBox.width,
-                    pdfBox.height
-                );
+            // SVG 和普通图片处理
+            else {
+                let imageData: string;
+                if (type === 'svg') {
+                    // 对于 SVG，需要特殊处理
+                    const svgElement = container as SVGElementContainer;
+                    imageData = svgElement.svg;
+                    try {
+                        this.jspdfCtx.addImage({
+                            imageData,
+                            format: 'SVG',
+                            x,
+                            y,
+                            w: width,
+                            h: height
+                        });
+                    } catch (error) {
+                        console.error('Failed to add SVG image:', error);
+                    }
+                } else {
+                    // 创建临时 canvas 来处理图片
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = container.intrinsicWidth;
+                    tempCanvas.height = container.intrinsicHeight;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    if (tempCtx) {
+                        tempCtx.drawImage(image as HTMLImageElement, 0, 0);
+                        imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
+                        try {
+                            this.jspdfCtx.addImage({
+                                imageData,
+                                format: 'JPEG',
+                                x,
+                                y,
+                                w: width,
+                                h: height
+                            });
+                        } catch (error) {
+                            console.error('Failed to add image:', error);
+                        }
+                    } else {
+                        throw new Error('Failed to get canvas context');
+                    }
+                }
             }
-
-
-
+        } catch (error) {
+            console.error(`Error rendering ${type}:`, error);
         }
+
+        this.ctx.restore();
     }
 
     // 渲染节点内容
@@ -602,7 +578,6 @@ export class CanvasRenderer extends Renderer {
         if (container instanceof ImageElementContainer) {
             try {
                 const image = await this.context.cache.match(container.src);
-                console.log('imageiMG', image, image instanceof HTMLImageElement)
                 this.renderReplacedElement(container, curves, image,'image');
             } catch (e) {
                 this.context.logger.error(`Error loading image ${container.src}`);
@@ -618,7 +593,6 @@ export class CanvasRenderer extends Renderer {
         if (container instanceof SVGElementContainer) {
             try {
                 const image = await this.context.cache.match(container.svg);
-                console.log('svgiMG',image, image instanceof HTMLImageElement)
                 this.renderReplacedElement(container, curves, image,'svg');
             } catch (e) {
                 this.context.logger.error(`Error loading svg ${container.svg.substring(0, 255)}`);
@@ -1199,73 +1173,84 @@ export class CanvasRenderer extends Renderer {
                 const startPoint = borderBoxArea[0] as Vector;
                 const endPoint = borderBoxArea[2] as Vector;
 
-                // 确保所有坐标都转换为 pt 单位
-                const x1 = this.pxToPt(startPoint.x-leftMargin);
-                const y1 = this.pxToPt(startPoint.y-topMargin);
-                const x2 = this.pxToPt(endPoint.x-leftMargin);
-                const y2 = this.pxToPt(endPoint.y-topMargin);
+                // 确保所有坐标都转换为 pt 单位并确保是有效的数字
+                const x1 = Number(this.pxToPt(startPoint.x-leftMargin));
+                const y1 = Number(this.pxToPt(startPoint.y-topMargin));
+                const x2 = Number(this.pxToPt(endPoint.x-leftMargin));
+                const y2 = Number(this.pxToPt(endPoint.y-topMargin));
                 
                 // 计算边框的实际位置（考虑边框宽度）
-                const offset = this.pxToPt(border.width / 2);
-                
-                try {
-                    switch (side) {
-                        case 0: // top
-                            this.jspdfCtx.line(
-                                x1 - offset,
-                                y1,
-                                x2 + offset,
-                                y1
-                            );
-                            break;
-                        case 1: // right
-                            this.jspdfCtx.line(
-                                x2,
-                                y1 - offset,
-                                x2,
-                                y2 + offset
-                            );
-                            break;
-                        case 2: // bottom
-                            this.jspdfCtx.line(
-                                x1 - offset,
-                                y2,
-                                x2 + offset,
-                                y2
-                            );
-                            break;
-                        case 3: // left
-                            this.jspdfCtx.line(
-                                x1,
-                                y1 - offset,
-                                x1,
-                                y2 + offset
-                            );
-                            break;
-                    }
-                    this.jspdfCtx.stroke();
-                } catch (error) {
-                    console.warn('Failed to draw border:', error);
-                    // 如果出错，尝试使用备用方法
+                const offset = Number(this.pxToPt(border.width / 2));
+
+                // 确保所有坐标都是有效的数字
+                if (!isNaN(x1) && !isNaN(y1) && !isNaN(x2) && !isNaN(y2) && !isNaN(offset)) {
                     try {
                         switch (side) {
                             case 0: // top
-                                this.jspdfCtx.line(x1 - offset, y1, x2 + offset, y1);
+                                this.jspdfCtx.line(
+                                    x1 - offset,
+                                    y1,
+                                    x2 + offset,
+                                    y1
+                                );
                                 break;
-                            case 1: // right  
-                                this.jspdfCtx.line(x2, y1 - offset, x2, y2 + offset);
+                            case 1: // right
+                                this.jspdfCtx.line(
+                                    x2,
+                                    y1 - offset,
+                                    x2,
+                                    y2 + offset
+                                );
                                 break;
                             case 2: // bottom
-                                this.jspdfCtx.line(x1 - offset, y2, x2 + offset, y2);
+                                this.jspdfCtx.line(
+                                    x1 - offset,
+                                    y2,
+                                    x2 + offset,
+                                    y2
+                                );
                                 break;
                             case 3: // left
-                                this.jspdfCtx.line(x1, y1 - offset, x1, y2 + offset);
+                                this.jspdfCtx.line(
+                                    x1,
+                                    y1 - offset,
+                                    x1,
+                                    y2 + offset
+                                );
                                 break;
                         }
                         this.jspdfCtx.stroke();
-                    } catch (fallbackError) {
-                        console.error('Failed to draw border with fallback method:', fallbackError);
+                    } catch (error) {
+                        console.warn('Failed to draw border:', error);
+                        // 如果出错，尝试使用备用方法
+                        try {
+                            // 使用 moveTo 和 lineTo 方法作为备用
+                            this.jspdfCtx.beginPath();
+                            switch (side) {
+                                case 0: // top
+                                    this.jspdfCtx.moveTo(x1 - offset, y1);
+                                    this.jspdfCtx.lineTo(x2 + offset, y1);
+                                    break;
+                                case 1: // right
+                                    this.jspdfCtx.moveTo(x2, y1 - offset);
+                                    this.jspdfCtx.lineTo(x2, y2 + offset);
+                                    break;
+                                case 2: // bottom
+                                    this.jspdfCtx.moveTo(x1 - offset, y2);
+                                    this.jspdfCtx.lineTo(x2 + offset, y2);
+                                    break;
+                                case 3: // left
+                                    this.jspdfCtx.moveTo(x1, y1 - offset);
+                                    this.jspdfCtx.lineTo(x1, y2 + offset);
+                                    break;
+                            }
+                            this.jspdfCtx.stroke();
+                        } catch (fallbackError) {
+                            console.error('Failed to draw border with fallback method:', fallbackError);
+                        }
                     }
+                } else {
+                    console.warn('Invalid coordinates for border:', { x1, y1, x2, y2, offset });
                 }
             }
             side++;
